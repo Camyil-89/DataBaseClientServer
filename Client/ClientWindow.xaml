@@ -4,12 +4,22 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
+		xmlns:vm="clr-namespace:DataBaseClientServer.ViewModels"
         mc:Ignorable="d"
         Title="Client"
         Height="300"
         Width="500"
         WindowStartupLocation="CenterScreen">
-    <Grid>
-        
+	<Window.DataContext>
+		<vm:ClientViewModel/>
+	</Window.DataContext>
+	<Grid>
+		<Grid.RowDefinitions>
+			<RowDefinition/>
+			<RowDefinition/>
+		</Grid.RowDefinitions>
+		<StackPanel Orientation="Horizontal">
+			<Button Width="100" Height="40" Content="Connect" Command="{Binding ConnectServerCommand}"/>
+		</StackPanel>
     </Grid>
 </Window>

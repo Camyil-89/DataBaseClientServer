@@ -5,21 +5,28 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
+using System.IO;
 
 namespace DataBaseClientServer.Models
 {
 	public class Server
 	{
+		~Server()
+		{
+			DisposeClients();
+		}
 		public bool Connect { get; set; } = false;
 
 		public int Port { get; set; } = 32001;
-		public int CountClient { get; set; } = 0;
+		public int CountClient { get => tcpClients.Count; }
 
 		public IPAddress IPAddress { get; set; } = IPAddress.Parse("127.0.0.0");
 
 		public delegate void Answer(API.Packet Packet);
 		public event Answer CallAnswer;
 		public int SizeBuffer = 2048;
+
+		private List<TcpClient> tcpClients = new List<TcpClient>();
 		
 		public void Start()
 		{
@@ -39,15 +46,29 @@ namespace DataBaseClientServer.Models
 				while (true)
 				{
 					var client = tcpListener.AcceptTcpClient();
-					CountClient++;
+					Log.WriteLine($"Connect client: {client.Client.RemoteEndPoint}");
 					Task.Run(() => { StartClient(client); });
 				}
 			});
 		}
-
+		void DisposeClients()
+		{
+			Log.WriteLine("Dispose Client");
+			foreach (var i in tcpClients)
+			{
+				Log.WriteLine($"Dispose {i.Client.RemoteEndPoint}");
+				i.Dispose();
+			}
+		}
+		public void SendPacketClient(TcpClient client, API.Packet packet)
+		{
+			StreamWriter networkStream = client.GetStream();
+			
+		}
 		void StartClient(TcpClient Client)
 		{
 			NetworkStream networkStream = Client.GetStream();
+			tcpClients.Add(Client);
 			while (Client.Connected)
 			{
 				try
@@ -63,7 +84,8 @@ namespace DataBaseClientServer.Models
 				}
 				catch { }
 			}
-			CountClient--;
+			Log.WriteLine($"Client disconnect: {Client.Client.RemoteEndPoint}");
+			tcpClients.Remove(Client);
 		}
 	}
 }
