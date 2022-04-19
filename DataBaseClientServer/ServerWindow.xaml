@@ -7,8 +7,9 @@
         xmlns:vm="clr-namespace:DataBaseClientServer.ViewModels"
         mc:Ignorable="d"
         Title="Server"
-        Height="450"
-        Width="800">
+        Height="300"
+        Width="500"
+        WindowStartupLocation="CenterScreen">
     <Window.DataContext>
         <vm:ServerViewModel/>
     </Window.DataContext>
