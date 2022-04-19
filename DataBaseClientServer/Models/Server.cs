@@ -51,36 +51,44 @@ namespace DataBaseClientServer.Models
 				}
 			});
 		}
-		void DisposeClients()
+		public void DisposeClients()
 		{
 			Log.WriteLine("Dispose Client");
 			foreach (var i in tcpClients)
 			{
 				Log.WriteLine($"Dispose {i.Client.RemoteEndPoint}");
-				i.Dispose();
+				API.Base.SendPacketClient(i, new API.Packet() { TypePacket = API.TypePacket.Termination });
+				//i.Dispose();
 			}
+			tcpClients.Clear();
 		}
-		public void SendPacketClient(TcpClient client, API.Packet packet)
-		{
-			StreamWriter networkStream = client.GetStream();
-			
-		}
+	
 		void StartClient(TcpClient Client)
 		{
 			NetworkStream networkStream = Client.GetStream();
 			tcpClients.Add(Client);
 			while (Client.Connected)
 			{
+				byte[] myReadBuffer = new byte[SizeBuffer];
+				do
+				{
+					networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
+				}
+				while (networkStream.DataAvailable);
+				Log.WriteLine($"Packet lenght: {myReadBuffer.Length}");
+				API.Packet packet = API.Packet.FromByteArray(myReadBuffer);
+				switch (packet.TypePacket)
+				{
+					case API.TypePacket.Ping:
+						API.Base.SendPacketClient(Client, packet);
+						break;
+					default:
+						if (packet != null) CallAnswer.Invoke(packet);
+						break;
+				}
 				try
 				{
-					byte[] myReadBuffer = new byte[SizeBuffer];
-					do
-					{
-						networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
-					}
-					while (networkStream.DataAvailable);
-					API.Packet packet = API.Packet.FromByteArray(myReadBuffer);
-					if (packet != null) CallAnswer.Invoke(packet);
+					
 				}
 				catch { }
 			}
