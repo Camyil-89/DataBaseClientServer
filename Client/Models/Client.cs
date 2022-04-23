@@ -45,6 +45,7 @@ namespace DataBaseClientServer.Models
 		{
 			NetworkStream networkStream = _Client.GetStream();
 			cipherAES.BaseKey();
+			API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.UpdateKey }, cipherAES);
 			while (_Client.Connected)
 			{
 				try

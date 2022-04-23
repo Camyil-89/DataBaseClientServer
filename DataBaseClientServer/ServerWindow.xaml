@@ -7,13 +7,59 @@
         xmlns:vm="clr-namespace:DataBaseClientServer.ViewModels"
         mc:Ignorable="d"
         Title="Server"
-        Height="300"
-        Width="500"
+        Height="500"
+        Width="600"
         WindowStartupLocation="CenterScreen">
     <Window.DataContext>
         <vm:ServerViewModel/>
     </Window.DataContext>
-    <Grid>
-
-    </Grid>
+	<DockPanel>
+		<TabControl>
+			<TabItem Header="Настройки сервера">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition Width="60*"/>
+						<ColumnDefinition Width="40*"/>
+					</Grid.ColumnDefinitions>
+					<StackPanel Grid.Column="0">
+						<GroupBox Header="Настройки">
+							<Grid>
+								<Grid.ColumnDefinitions>
+									<ColumnDefinition/>
+									<ColumnDefinition/>
+								</Grid.ColumnDefinitions>
+								<Grid.RowDefinitions>
+									<RowDefinition/>
+									<RowDefinition/>
+								</Grid.RowDefinitions>
+								<TextBlock Grid.Row="0" Grid.Column="0" Text="Порт для подключения" Margin="5" FontSize="14"/>
+								<TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Server.Port}" Margin="5" FontSize="14"/>
+								<Button Grid.Row="1" Grid.Column="0" Content="Запустить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StartServerListenerCommand}"/>
+								<Button Grid.Row="1" Grid.Column="1" Content="Остановить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StopServerListenerCommand}"/>
+							</Grid>
+						</GroupBox>
+					</StackPanel>
+					<Grid Grid.Column="1">
+						<Grid.RowDefinitions>
+							<RowDefinition/>
+							<RowDefinition Height="30"/>
+						</Grid.RowDefinitions>
+						<DockPanel Grid.Row="0">
+							<ListBox ItemsSource="{Binding Server.tcpClients}">
+								<ListBox.ItemTemplate>
+									<DataTemplate>
+										<TextBlock Text="{Binding Client.Client.RemoteEndPoint}"/>
+									</DataTemplate>
+								</ListBox.ItemTemplate>
+							</ListBox>
+						</DockPanel>
+						<StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
+							<TextBlock Text=""/>
+							<TextBlock Text="{Binding Server.tcpClients.Count}"/>
+						</StackPanel>
+					</Grid>
+				</Grid>
+			</TabItem>
+		</TabControl>
+	</DockPanel>
 </Window>
