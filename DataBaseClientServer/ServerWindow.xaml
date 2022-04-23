@@ -31,11 +31,14 @@
 								<Grid.RowDefinitions>
 									<RowDefinition/>
 									<RowDefinition/>
+									<RowDefinition/>
 								</Grid.RowDefinitions>
-								<TextBlock Grid.Row="0" Grid.Column="0" Text="Порт для подключения" Margin="5" FontSize="14"/>
-								<TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Server.Port}" Margin="5" FontSize="14"/>
-								<Button Grid.Row="1" Grid.Column="0" Content="Запустить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StartServerListenerCommand}"/>
-								<Button Grid.Row="1" Grid.Column="1" Content="Остановить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StopServerListenerCommand}"/>
+								<TextBlock Grid.Row="0" Grid.Column="0" Text="IP адрес сервера" Margin="5" FontSize="14"/>
+								<TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Server.IPAddress}" Margin="5" FontSize="14"/>
+								<TextBlock Grid.Row="1" Grid.Column="0" Text="Порт для подключения" Margin="5" FontSize="14"/>
+								<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Server.Port}" Margin="5" FontSize="14"/>
+								<Button Grid.Row="2" Grid.Column="0" Content="Запустить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StartServerListenerCommand}"/>
+								<Button Grid.Row="2" Grid.Column="1" Content="Остановить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StopServerListenerCommand}"/>
 							</Grid>
 						</GroupBox>
 					</StackPanel>
@@ -45,16 +48,18 @@
 							<RowDefinition Height="30"/>
 						</Grid.RowDefinitions>
 						<DockPanel Grid.Row="0">
-							<ListBox ItemsSource="{Binding Server.tcpClients}">
-								<ListBox.ItemTemplate>
+							<ListView HorizontalAlignment="Stretch"  Name="listBox" Margin="5 5 5 5" ItemsSource="{Binding Server.tcpClients}" FontFamily="Monospac821 BT" FontSize="14">
+								<ListView.ItemTemplate>
 									<DataTemplate>
-										<TextBlock Text="{Binding Client.Client.RemoteEndPoint}"/>
+										<StackPanel Orientation="Horizontal">
+											<TextBlock Text="{Binding Client.Client.RemoteEndPoint}"/>
+										</StackPanel>
 									</DataTemplate>
-								</ListBox.ItemTemplate>
-							</ListBox>
+								</ListView.ItemTemplate>
+							</ListView>
 						</DockPanel>
-						<StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center">
-							<TextBlock Text=""/>
+						<StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="5">
+							<TextBlock Text="Количество клиентов: "/>
 							<TextBlock Text="{Binding Server.tcpClients.Count}"/>
 						</StackPanel>
 					</Grid>

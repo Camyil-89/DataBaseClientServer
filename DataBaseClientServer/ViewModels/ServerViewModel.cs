@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using System.Windows.Input;
 using DataBaseClientServer;
 using DataBaseClientServer.Base.Command;
+using DataBaseClientServer.Models;
 using DataBaseClientServer.Models.database;
 
 namespace DataBaseClientServer.ViewModels
@@ -16,6 +21,8 @@ namespace DataBaseClientServer.ViewModels
 
 		private Models.Server _Server = new Models.Server();
 		public Models.Server Server { get => _Server; set => Set(ref _Server, value); }
+
+		private static object _lock = new object();
 		public ServerViewModel()
 		{
 			Log.WriteLine("ServerViewModel");
@@ -25,8 +32,17 @@ namespace DataBaseClientServer.ViewModels
 			StopServerListenerCommand = new LambdaCommand(OnStopServerListenerCommand, CanStopServerListenerCommand);
 			#endregion
 
+			BindingOperations.EnableCollectionSynchronization(Server.tcpClients, _lock); // доступ из всех потоков
 
 			Server.CallAnswer += Answer;
+			foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
+			{
+				if (ip.AddressFamily == AddressFamily.InterNetwork)
+				{
+					Server.IPAddress = ip;
+					break;
+				}
+			}
 			App.Current.Exit += Current_Exit;
 		}
 

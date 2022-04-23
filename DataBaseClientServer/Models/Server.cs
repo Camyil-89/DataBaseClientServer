@@ -13,17 +13,14 @@ namespace DataBaseClientServer.Models
 {
 	public class Server: Base.ViewModel.BaseViewModel
 	{
-		~Server()
-		{
-			DisposeClients();
-		}
 		public bool Work { get; set; } = false;
 
 		private int _port = 32001;
 		public int Port { get => _port; set => Set(ref _port, value); }
 		public int CountClient { get => tcpClients.Count; }
 
-		public IPAddress IPAddress { get; set; } = IPAddress.Parse("127.0.0.0");
+		private IPAddress _IPAddress = IPAddress.Parse("127.0.0.0");
+		public IPAddress IPAddress { get => _IPAddress; set => Set(ref _IPAddress, value); }
 
 		public delegate void Answer(API.Packet Packet);
 		public event Answer CallAnswer;
@@ -33,21 +30,14 @@ namespace DataBaseClientServer.Models
 
 		private int CountPacketReciveToUpdateKey = 10;
 
-		public ObservableCollection<TCPClient> tcpClients = new ObservableCollection<TCPClient>();
+		public ObservableCollection<TCPClient> tcpClients { get; set; } = new ObservableCollection<TCPClient>();
 
 		private TcpListener tcpListener;
 		public void Start()
 		{
 			tcpListener = new TcpListener(IPAddress.Any, Port);
 			tcpListener.Start();
-			foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
-			{
-				if (ip.AddressFamily == AddressFamily.InterNetwork)
-				{
-					IPAddress = ip;
-					break;
-				}
-			}
+	
 			Log.WriteLine($"IP: {IPAddress}");
 			Log.WriteLine($"Port: {Port}");
 			Work = true;
@@ -63,7 +53,7 @@ namespace DataBaseClientServer.Models
 		public void DisposeClients()
 		{
 			Log.WriteLine("Dispose Client");
-			tcpListener.Stop();
+			if (tcpListener != null) tcpListener.Stop();
 			Work = false;
 			foreach (var i in tcpClients)
 			{
@@ -130,9 +120,12 @@ namespace DataBaseClientServer.Models
 			tcpClients.Remove(tCPClient);
 		}
 	}
-	public class TCPClient
+	public class TCPClient: Base.ViewModel.BaseViewModel
 	{
-		public TcpClient Client { get; set; }
-		public API.CipherAES CipherAES { get; set; }
+		private TcpClient _Client;
+		public TcpClient Client { get => _Client; set => Set(ref _Client, value); }
+
+		private API.CipherAES _CipherAES;
+		public API.CipherAES CipherAES { get => _CipherAES; set => Set(ref _CipherAES, value); }
 	}
 }
