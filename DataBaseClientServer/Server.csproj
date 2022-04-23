@@ -61,6 +61,9 @@
     <Compile Include="Models\database\DataBase.cs" />
     <Compile Include="Models\Log.cs" />
     <Compile Include="Models\Server.cs" />
+    <Compile Include="Models\SettingsServer\Clients.cs" />
+    <Compile Include="Models\SettingsServer\ProviderXML.cs" />
+    <Compile Include="Models\SettingsServer\Settings.cs" />
     <Compile Include="ViewModels\ServerViewModel.cs" />
     <Page Include="ServerWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

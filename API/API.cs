@@ -19,6 +19,11 @@ namespace API
 			networkStream.Write(byte_packet, 0, byte_packet.Length);
 		}
 	}
+	public enum AccessLevel: int
+	{
+		User = 1,
+		Admin = 10,
+	}
 	public enum TypePacket : int
 	{
 		Disconnect = 2,

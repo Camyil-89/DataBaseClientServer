@@ -32,13 +32,18 @@
 									<RowDefinition/>
 									<RowDefinition/>
 									<RowDefinition/>
+									<RowDefinition/>
 								</Grid.RowDefinitions>
 								<TextBlock Grid.Row="0" Grid.Column="0" Text="IP адрес сервера" Margin="5" FontSize="14"/>
 								<TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Server.IPAddress}" Margin="5" FontSize="14"/>
 								<TextBlock Grid.Row="1" Grid.Column="0" Text="Порт для подключения" Margin="5" FontSize="14"/>
 								<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Server.Port}" Margin="5" FontSize="14"/>
-								<Button Grid.Row="2" Grid.Column="0" Content="Запустить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StartServerListenerCommand}"/>
-								<Button Grid.Row="2" Grid.Column="1" Content="Остановить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StopServerListenerCommand}"/>
+								<CheckBox Grid.Row="2" Grid.ColumnSpan="2" IsChecked="{Binding Settings.ServerSettings.AutoStartServer}" Content="Запуска сервер автоматически" FontSize="14" Margin="5" FlowDirection="RightToLeft" HorizontalAlignment="Left"/>
+								<StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+									<Button Content="Запустить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StartServerListenerCommand}"/>
+									<Button Content="Остановить сервер" Width="150" Margin="5" FontSize="14" Height="27" Command="{Binding StopServerListenerCommand}"/>
+								</StackPanel>
+								
 							</Grid>
 						</GroupBox>
 					</StackPanel>
@@ -48,7 +53,7 @@
 							<RowDefinition Height="30"/>
 						</Grid.RowDefinitions>
 						<DockPanel Grid.Row="0">
-							<ListView HorizontalAlignment="Stretch"  Name="listBox" Margin="5 5 5 5" ItemsSource="{Binding Server.tcpClients}" FontFamily="Monospac821 BT" FontSize="14">
+							<ListView Margin="5" ItemsSource="{Binding Server.tcpClients}" FontSize="14">
 								<ListView.ItemTemplate>
 									<DataTemplate>
 										<StackPanel Orientation="Horizontal">
@@ -62,6 +67,53 @@
 							<TextBlock Text="Количество клиентов: "/>
 							<TextBlock Text="{Binding Server.tcpClients.Count}"/>
 						</StackPanel>
+					</Grid>
+				</Grid>
+			</TabItem>
+			<TabItem Header="Клиенты">
+				<Grid>
+					<Grid.ColumnDefinitions>
+						<ColumnDefinition/>
+						<ColumnDefinition/>
+					</Grid.ColumnDefinitions>
+					<Grid Grid.Column="0">
+						<Grid.RowDefinitions>
+							<RowDefinition/>
+							<RowDefinition Height="50"/>
+						</Grid.RowDefinitions>
+						<DockPanel Grid.Row="0">
+							<ListView Margin="5" ItemsSource="{Binding Settings.Clients}" FontSize="14">
+								<ListView.View>
+									
+									<GridView>
+										<GridView.Columns>
+											<GridViewColumn Header="ИД" Width="auto">
+												<GridViewColumn.CellTemplate>
+													<DataTemplate>
+														<TextBlock Text="{Binding UID}"></TextBlock>
+													</DataTemplate>
+												</GridViewColumn.CellTemplate>
+											</GridViewColumn>
+											<GridViewColumn Header="Имя" Width="auto">
+												<GridViewColumn.CellTemplate>
+													<DataTemplate>
+														<TextBlock Text="{Binding Name}"></TextBlock>
+													</DataTemplate>
+												</GridViewColumn.CellTemplate>
+											</GridViewColumn>
+											<GridViewColumn Header="Уровень доступа" Width="auto">
+												<GridViewColumn.CellTemplate>
+													<DataTemplate>
+														<TextBlock Text="{Binding AccessLevel}"></TextBlock>
+													</DataTemplate>
+												</GridViewColumn.CellTemplate>
+											</GridViewColumn>
+										</GridView.Columns>
+									</GridView>
+									
+								</ListView.View>
+							</ListView>
+						</DockPanel>
 					</Grid>
 				</Grid>
 			</TabItem>
