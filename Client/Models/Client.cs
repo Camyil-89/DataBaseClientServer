@@ -19,11 +19,12 @@ namespace DataBaseClientServer.Models
 		public delegate void Answer(API.Packet Packet);
 		private DateTime LastAnswer;
 		public event Answer CallAnswer;
+		private API.CipherAES cipherAES = new API.CipherAES();
 		public TimeSpan Ping()
 		{
 			DateTime last_answer = LastAnswer;
 			DateTime dateTime = DateTime.Now;
-			API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.Ping });
+			API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.Ping }, cipherAES);
 			while (last_answer == LastAnswer) { }
 			return LastAnswer - dateTime;
 		}
@@ -43,6 +44,7 @@ namespace DataBaseClientServer.Models
 		public void ClientListener()
 		{
 			NetworkStream networkStream = _Client.GetStream();
+			cipherAES.BaseKey();
 			while (_Client.Connected)
 			{
 				try
@@ -53,7 +55,7 @@ namespace DataBaseClientServer.Models
 						networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
 					}
 					while (networkStream.DataAvailable);
-					API.Packet packet = API.Packet.FromByteArray(myReadBuffer);
+					API.Packet packet = API.Packet.FromByteArray(myReadBuffer, cipherAES);
 					LastAnswer = DateTime.Now;
 					switch (packet.TypePacket)
 					{
@@ -62,6 +64,10 @@ namespace DataBaseClientServer.Models
 						case API.TypePacket.Termination:
 							_Client.Dispose();
 							return;
+						case API.TypePacket.UpdateKey:
+							API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.ConfirmKey }, cipherAES);
+							cipherAES = (API.CipherAES)packet.Data;
+							break;
 						default:
 							if (packet != null) CallAnswer.Invoke(packet);
 							break;

@@ -45,23 +45,6 @@ namespace DataBaseClientServer.ViewModels
 		#endregion
 		private void StartServer()
 		{
-			Task.Run(() => {
-				Thread.Sleep(1000);
-				try
-				{
-					API.Packet packet = new API.Packet() { TypePacket = API.TypePacket.Ping };
-					var x = API.Packet.ToByteArray(packet);
-					Console.WriteLine($">{x.Length}");
-
-					var g = API.Packet.FromByteArray(x);
-					Console.WriteLine(1312312);
-					Console.WriteLine(g);
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine(ex);
-				}
-			});
 			Server = new Models.Server();
 			Server.CallAnswer += Answer;
 			Server.Start();

@@ -44,7 +44,8 @@ namespace DataBaseClientServer.ViewModels
 		private void ConnectClient()
 		{
 			Client = new Models.Client();
-			Client.IPAddress = IPAddress.Parse("192.168.1.79");
+			Client.IPAddress = IPAddress.Parse("10.102.250.252");
+			//Client.IPAddress = IPAddress.Parse("192.168.1.79");
 			Client.CallAnswer += Answer;
 			Client.Connect();
 		}
