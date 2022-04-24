@@ -15,6 +15,13 @@ namespace DataBaseClientServer.Models.SettingsServer
 	}
 	public class ServerSettings: Base.ViewModel.BaseViewModel
 	{
+		private byte[] _IV_AES = API.CipherAES.IV_base;
+		public byte[] IV_AES { get => _IV_AES; set => Set(ref _IV_AES, value);}
+
+
+		private byte[] _Key_AES = API.CipherAES.KEY_base;
+		public byte[] KeyAES { get => _Key_AES; set => Set(ref _Key_AES, value); }
+
 		private bool _AutoStartServer;
 		public bool AutoStartServer { get => _AutoStartServer; set => Set(ref _AutoStartServer, value); }
 	}

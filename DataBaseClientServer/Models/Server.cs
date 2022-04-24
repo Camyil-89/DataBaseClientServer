@@ -33,7 +33,7 @@ namespace DataBaseClientServer.Models
 		public ObservableCollection<TCPClient> tcpClients { get; set; } = new ObservableCollection<TCPClient>();
 
 		private TcpListener tcpListener;
-		public void Start()
+		public void Start(byte[] Key_aes, byte[] IV_aes)
 		{
 			tcpListener = new TcpListener(IPAddress.Any, Port);
 			tcpListener.Start();
@@ -46,7 +46,7 @@ namespace DataBaseClientServer.Models
 				{
 					var client = tcpListener.AcceptTcpClient();
 					Log.WriteLine($"Connect client: {client.Client.RemoteEndPoint}");
-					Task.Run(() => { StartClient(client); });
+					Task.Run(() => { StartClient(client, Key_aes, IV_aes); });
 				}
 			});
 		}
@@ -64,12 +64,13 @@ namespace DataBaseClientServer.Models
 			tcpClients.Clear();
 		}
 	
-		void StartClient(TcpClient Client)
+		void StartClient(TcpClient Client, byte[] Key_aes, byte[] IV_aes)
 		{
 			NetworkStream networkStream = Client.GetStream();
 			API.CipherAES cipherAES = new API.CipherAES();
 			API.CipherAES updateCipherAES = new API.CipherAES();
-			cipherAES.BaseKey();
+			cipherAES.AES_KEY = Key_aes;
+			cipherAES.AES_IV = IV_aes;
 			TCPClient tCPClient = new TCPClient() { Client = Client, CipherAES = cipherAES};
 			tcpClients.Add(tCPClient);
 			int CountPacketRecive = 0;

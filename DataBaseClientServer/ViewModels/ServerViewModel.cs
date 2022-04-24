@@ -15,6 +15,7 @@ using DataBaseClientServer.Base.Command;
 using DataBaseClientServer.Models;
 using DataBaseClientServer.Models.SettingsServer;
 using DataBaseClientServer.Models.database;
+using System.Windows;
 
 namespace DataBaseClientServer.ViewModels
 {
@@ -24,8 +25,21 @@ namespace DataBaseClientServer.ViewModels
 		private Server _Server = new Server();
 		public Server Server { get => _Server; set => Set(ref _Server, value); }
 
-		public Settings _Settings = new Settings();
+		private Settings _Settings = new Settings();
 		public Settings Settings { get => _Settings; set => Set(ref _Settings, value); }
+
+		private Visibility _VisibilityKeyAES = Visibility.Collapsed;
+		public Visibility VisibilityKeyAES { get => _VisibilityKeyAES; set => Set(ref _VisibilityKeyAES, value);  }
+
+		private bool _CheckVisibilytiKeyAES = false;
+		public bool CheckVisibilytiKeyAES { get => _CheckVisibilytiKeyAES; set { Set(ref _CheckVisibilytiKeyAES, value); if (value == true) VisibilityKeyAES = Visibility.Visible; else VisibilityKeyAES = Visibility.Collapsed; } }
+
+		private Visibility _VisibilityIvAES = Visibility.Collapsed;
+		public Visibility VisibilityIvAES { get => _VisibilityIvAES; set => Set(ref _VisibilityIvAES, value); }
+
+		private bool _CheckVisibilytiIvAES = false;
+		public bool CheckVisibilytiIvAES { get => _CheckVisibilytiIvAES; set { Set(ref _CheckVisibilytiIvAES, value); if (value == true) VisibilityIvAES = Visibility.Visible; else VisibilityIvAES = Visibility.Collapsed; } }
+
 
 		private static object _lock = new object();
 		#region Kernel
@@ -79,8 +93,9 @@ namespace DataBaseClientServer.ViewModels
 				}
 			}
 			catch { Settings.ServerSettings = new ServerSettings(); }
-			Task.Run(() => { StartServer(); });
+			if (Settings.ServerSettings.AutoStartServer) Task.Run(() => { StartServer(); });
 			Log.WriteLine("LoadXML: true");
+			Console.WriteLine(Settings.ServerSettings.KeyAES[0]);
 			//Settings.Clients.Add(new Client() { AccessLevel = API.AccessLevel.Admin, Name = "test2", Password = "123", UID = Client.GenerateUIDClient(Settings.Clients)});
 			//Settings.Clients.Add(new Client() { AccessLevel = API.AccessLevel.User, Name = "test2", Password = "123", UID = Client.GenerateUIDClient(Settings.Clients)});
 		}
@@ -133,7 +148,7 @@ namespace DataBaseClientServer.ViewModels
 		private void StartServer()
 		{
 			Log.WriteLine("Start server");
-			Server.Start();
+			Server.Start(Settings.ServerSettings.KeyAES, Settings.ServerSettings.IV_AES);
 
 			//Task.Run(() =>
 			//{
