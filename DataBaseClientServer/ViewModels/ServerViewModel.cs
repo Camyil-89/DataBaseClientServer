@@ -132,6 +132,10 @@ namespace DataBaseClientServer.ViewModels
 
 		private static object _lock = new object();
 		#region Kernel
+
+		/// <summary>
+		/// Запуск программы
+		/// </summary>
 		public ServerViewModel()
 		{
 			Log.WriteLine("ServerViewModel");
@@ -156,12 +160,17 @@ namespace DataBaseClientServer.ViewModels
 			App.Current.Exit += Current_Exit;
 			Task.Run(() => { LoadXML(); });
 		}
-
+		/// <summary>
+		/// Выход из программы
+		/// </summary>
 		private void Current_Exit(object sender, System.Windows.ExitEventArgs e)
 		{
 			Server.DisposeClients();
 			SaveXML();
 		}
+		/// <summary>
+		/// подгрузка данных
+		/// </summary>
 		private void LoadXML()
 		{
 			Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}\\Settings");
@@ -186,6 +195,9 @@ namespace DataBaseClientServer.ViewModels
 			//Settings.Clients.Add(new Client() { AccessLevel = API.AccessLevel.Admin, Name = "test2", Password = "123", UID = Client.GenerateUIDClient(Settings.Clients)});
 			//Settings.Clients.Add(new Client() { AccessLevel = API.AccessLevel.User, Name = "test2", Password = "123", UID = Client.GenerateUIDClient(Settings.Clients)});
 		}
+		/// <summary>
+		/// Сохранение всех необходимых данных
+		/// </summary>
 		private void SaveXML()
 		{
 			Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}\\Settings");
@@ -237,6 +249,9 @@ namespace DataBaseClientServer.ViewModels
 			}
 			
 		}
+		/// <summary>
+		/// Изменение данных у пользователя
+		/// </summary>
 		private void ChangeUser()
 		{
 			var find = Settings.Clients.FirstOrDefault((i) => i.Name == UserName);
@@ -248,12 +263,18 @@ namespace DataBaseClientServer.ViewModels
 			}
 			else MessageBox.Show($"Пользователь с именем \"{UserName}\" уже добавлен", "Уведомление");
 		}
+		/// <summary>
+		/// Удаление пользователя из базы
+		/// </summary>
 		private void RemoveUser()
 		{
 			var answer = MessageBox.Show("Вы уверены что хотите удалить пользователя?", "Уведомление", MessageBoxButton.YesNo);
 			if (answer != MessageBoxResult.Yes) return;
 			Settings.Clients.RemoveAt(SelectUser);
 		}
+		/// <summary>
+		/// Добавление пользователя в базу
+		/// </summary>
 		private void AddUser()
 		{
 			var find = Settings.Clients.FirstOrDefault((i) => i.Name == UserName);
@@ -294,6 +315,9 @@ namespace DataBaseClientServer.ViewModels
 		}
 		#endregion
 		#endregion
+		/// <summary>
+		/// Запуск сервера
+		/// </summary>
 		private void StartServer()
 		{
 			Log.WriteLine("Start server");
@@ -314,6 +338,10 @@ namespace DataBaseClientServer.ViewModels
 			//	catch (Exception ex) { Console.WriteLine(ex); }
 			//});
 		}
+		/// <summary>
+		///  Получение ответа от клиента
+		/// </summary>
+		/// <param name="Packet"></param>
 		private void Answer(API.Packet Packet)
 		{
 			Log.WriteLine(Packet);

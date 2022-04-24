@@ -33,6 +33,10 @@ namespace DataBaseClientServer.Models
 		public ObservableCollection<TCPClient> tcpClients { get; set; } = new ObservableCollection<TCPClient>();
 
 		private TcpListener tcpListener;
+
+		/// <summary>
+		/// Запуск сервера и сокета для прослушивания
+		/// </summary>
 		public void Start(byte[] Key_aes, byte[] IV_aes)
 		{
 			tcpListener = new TcpListener(IPAddress.Any, Port);
@@ -50,6 +54,9 @@ namespace DataBaseClientServer.Models
 				}
 			});
 		}
+		/// <summary>
+		/// Освобождение ресурсов и отключение всех клиетов
+		/// </summary>
 		public void DisposeClients()
 		{
 			Log.WriteLine("Dispose Client");
@@ -63,7 +70,9 @@ namespace DataBaseClientServer.Models
 			}
 			tcpClients.Clear();
 		}
-	
+		/// <summary>
+		/// Подключение клиента
+		/// </summary>
 		void StartClient(TcpClient Client, byte[] Key_aes, byte[] IV_aes)
 		{
 			NetworkStream networkStream = Client.GetStream();
