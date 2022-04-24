@@ -183,6 +183,35 @@
 							</ListView>
 						</DockPanel>
 					</Grid>
+					<StackPanel Grid.Column="1" Orientation="Vertical">
+						<ComboBox Grid.Row="3" Grid.Column="1" Margin="5" FontSize="14" Height="25" SelectedIndex="{Binding SelectMode}">
+							<ComboBoxItem Content="Добавлени"/>
+							<ComboBoxItem Content="Удаление"/>
+							<ComboBoxItem Content="Изменение"/>
+						</ComboBox>
+						<ComboBox Visibility="{Binding VisibilitySelectUser}" SelectedIndex="{Binding SelectUser}" IsEditable="True" ItemsSource="{Binding Settings.Clients}" Grid.Row="3" Grid.Column="1" Margin="5" FontSize="14" Height="25" Width="200" DisplayMemberPath="UID"/>
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition/>
+								<ColumnDefinition/>
+							</Grid.ColumnDefinitions>
+							<Grid.RowDefinitions>
+								<RowDefinition/>
+								<RowDefinition/>
+								<RowDefinition/>
+							</Grid.RowDefinitions>
+							<TextBlock Grid.Row="0" Grid.Column="0" Text="Имя" Margin="5" FontSize="14" HorizontalAlignment="Right"/>
+							<TextBox Grid.Row="0" Grid.Column="1" Text="{Binding UserName}" Margin="5" FontSize="14"/>
+							<TextBlock Grid.Row="1" Grid.Column="0" Text="Пароль" Margin="5" FontSize="14" HorizontalAlignment="Right"/>
+							<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding UserPassword}" Margin="5" FontSize="14"/>
+							<TextBlock Grid.Row="2" Grid.Column="0" Text="Уровель доступа" Margin="5" FontSize="14" TextWrapping="WrapWithOverflow" HorizontalAlignment="Right"/>
+							<ComboBox Grid.Row="3" Grid.Column="1" Margin="5" FontSize="14" SelectedIndex="{Binding AccessLevelUser}" Height="25">
+								<ComboBoxItem Content="Пользователь" Tag="1"/>
+								<ComboBoxItem Content="Админ" Tag="100"/>
+							</ComboBox>
+						</Grid>
+						<Button Content="{Binding TextButtonAddDeleteChange}" Width="200" Margin="5" FontSize="14" Height="27" Command="{Binding AddUserCommand}"/>
+					</StackPanel>
 				</Grid>
 			</TabItem>
 		</TabControl>

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 
 namespace DataBaseClientServer.Models.SettingsServer
 {
@@ -22,7 +17,8 @@ namespace DataBaseClientServer.Models.SettingsServer
 		private byte[] _Key_AES = API.CipherAES.KEY_base;
 		public byte[] KeyAES { get => _Key_AES; set => Set(ref _Key_AES, value); }
 
-		private bool _AutoStartServer;
+
+		private bool _AutoStartServer = false;
 		public bool AutoStartServer { get => _AutoStartServer; set => Set(ref _AutoStartServer, value); }
 	}
 }

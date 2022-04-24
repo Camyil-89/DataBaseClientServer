@@ -22,7 +22,7 @@ namespace API
 	public enum AccessLevel: int
 	{
 		User = 1,
-		Admin = 10,
+		Admin = 100,
 	}
 	public enum TypePacket : int
 	{
