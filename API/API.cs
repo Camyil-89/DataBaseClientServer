@@ -7,11 +7,47 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+namespace API.Excepcion
+{
+	public class ExcepcionClientConnectLose: Exception
+	{
+		public override string Message => "Подключение разорвано.";
+	}
+	public class ExcepcionTimeOut : Exception
+	{
+		public override string Message => "Превышено время ожидания";
+	}
+	public class ExcepcionIsAuthorizationClientUse : Exception
+	{
+		public override string Message => "Для использования этого запроса требуется авторизация со стороны сервера.";
+	}
+}
 
 namespace API
 {
+	public enum AccessLevel : int
+	{
+		User = 1,
+		Admin = 100,
+	}
+	public enum TypeError : int
+	{
+		Login = 1,
+		Passsword = 2,
+	}
+	public enum TypePacket : int
+	{
+		Disconnect = 2,
+		Termination = 3,
+		Ping = 4,
+		UpdateKey = 5,
+		ConfirmKey = 6,
+		Authorization = 7,
+		AuthorizationFailed = 8,
+	}
 	public static class Base
 	{
+		public static List<API.TypePacket> IsAuthorizationClientUse = new List<API.TypePacket>() { API.TypePacket.Ping };
 		public static void SendPacketClient(TcpClient client, API.Packet packet, CipherAES cipherAES)
 		{
 			NetworkStream networkStream = client.GetStream();
@@ -19,19 +55,7 @@ namespace API
 			networkStream.Write(byte_packet, 0, byte_packet.Length);
 		}
 	}
-	public enum AccessLevel: int
-	{
-		User = 1,
-		Admin = 100,
-	}
-	public enum TypePacket : int
-	{
-		Disconnect = 2,
-		Termination = 3,
-		Ping = 4,
-		UpdateKey,
-		ConfirmKey,
-	}
+	
 	[Serializable]
 	public class CipherAES
 	{
@@ -96,6 +120,18 @@ namespace API
 				return PerformCryptography(data, decryptor);
 			}
 		}
+	}
+	[Serializable]
+	public class ResponseError
+	{
+		public TypeError TypeError { get; set; }
+		public string Info { get; set; }
+	}
+	[Serializable]
+	public class Authorization
+	{
+		public string Login { get; set; }
+		public string Password { get; set; }
 	}
 	[Serializable]
 	public class Packet

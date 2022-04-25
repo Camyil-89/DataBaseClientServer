@@ -8,6 +8,8 @@ using System.Net.Sockets;
 using System.IO;
 using DataBaseClientServer.Models.database;
 using System.Collections.ObjectModel;
+using DataBaseClientServer.Models.SettingsServer;
+using DataBaseClientServer.ViewModels;
 
 namespace DataBaseClientServer.Models
 {
@@ -26,13 +28,25 @@ namespace DataBaseClientServer.Models
 		public event Answer CallAnswer;
 		public int SizeBuffer = 2048;
 
+
 		public DataBase AccessDataBase = new DataBase();
 
-		private int CountPacketReciveToUpdateKey = 10;
+		public ServerViewModel ServerViewModel { get; set; }
+
+		private int CountPacketReciveToUpdateKey = 10; // min 2
 
 		public ObservableCollection<TCPClient> tcpClients { get; set; } = new ObservableCollection<TCPClient>();
 
 		private TcpListener tcpListener;
+
+		public Client GetClientFromDataBase(string Login, string Password)
+		{
+			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Name == Login && i.Password == Password);
+		}
+		public bool FindUserInDataBase(string Login, string Password)
+		{
+			return GetClientFromDataBase(Login, Password) != null;
+		}
 
 		/// <summary>
 		/// Запуск сервера и сокета для прослушивания
@@ -82,6 +96,7 @@ namespace DataBaseClientServer.Models
 			cipherAES.AES_IV = IV_aes;
 			TCPClient tCPClient = new TCPClient() { Client = Client, CipherAES = cipherAES};
 			tcpClients.Add(tCPClient);
+			bool IsAuthorization = false;
 			int CountPacketRecive = 0;
 			while (Client.Connected)
 			{
@@ -96,6 +111,7 @@ namespace DataBaseClientServer.Models
 					while (networkStream.DataAvailable);
 					Log.WriteLine($"[{Client.Client.RemoteEndPoint}] Packet lenght: {myReadBuffer.Length}");
 					API.Packet packet = API.Packet.FromByteArray(myReadBuffer, cipherAES);
+					if (!IsAuthorization && API.Base.IsAuthorizationClientUse.Contains(packet.TypePacket)) continue; 
 					switch (packet.TypePacket)
 					{
 						case API.TypePacket.Ping:
@@ -111,6 +127,12 @@ namespace DataBaseClientServer.Models
 							cipherAES = updateCipherAES;
 							tCPClient.CipherAES = cipherAES;
 							Log.WriteLine($"[{Client.Client.RemoteEndPoint}] API.TypePacket.ConfirmKey: {tCPClient.CipherAES.AES_KEY.Length * 8} | {string.Join(";", tCPClient.CipherAES.AES_KEY)}");
+							break;
+						case API.TypePacket.Authorization:
+							IsAuthorization = FindUserInDataBase((packet.Data as API.Authorization).Login, (packet.Data as API.Authorization).Password);
+							if (IsAuthorization) API.Base.SendPacketClient(Client, new API.Packet() { TypePacket = API.TypePacket.Authorization }, cipherAES);
+							else API.Base.SendPacketClient(Client, new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed }, cipherAES);
+							Log.WriteLine($"[{Client.Client.RemoteEndPoint}] API.TypePacket.Authorization: {IsAuthorization}");
 							break;
 						default:
 							if (packet != null) CallAnswer.Invoke(packet);

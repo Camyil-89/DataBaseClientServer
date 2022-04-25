@@ -7,33 +7,46 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using DataBaseClientServer;
 using DataBaseClientServer.Base.Command;
+using DataBaseClientServer.Models;
 
 namespace DataBaseClientServer.ViewModels
 {
 	class ClientViewModel : Base.ViewModel.BaseViewModel
 	{
-		private Models.Client Client;
+		private Models.Client _Client = new Models.Client();
+		public Models.Client Client { get => _Client; set => Set(ref _Client, value); }
 		public ClientViewModel()
 		{
 			ConnectServerCommand = new LambdaCommand(OnConnectServerCommand, CanConnectServerCommand);
 			PingServerCommand = new LambdaCommand(OnPingServerCommand, CanPingServerCommand);
+			AuthorizationServerCommand = new LambdaCommand(OnAuthorizationServerCommand, CanAuthorizationServerCommand);
 			Console.WriteLine("Start");
 		}
 		#region Commands
-		#region PingServerCommand
-		public ICommand PingServerCommand { get; set; }
-		public bool CanPingServerCommand(object e) => Client != null && Client.Connected;
-		public void OnPingServerCommand(object e)
+		#region AuthorizationServerCommand
+		public ICommand AuthorizationServerCommand { get; set; }
+		public bool CanAuthorizationServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Connected && !Client.IsAuthorization;
+		public void OnAuthorizationServerCommand(object e)
 		{
-			Console.WriteLine(Client.Ping().TotalMilliseconds);
+			Console.WriteLine(Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Authorization, Data = new API.Authorization() { Login = "test", Password = "test" } }));
+			//Console.WriteLine(Client.Ping().TotalMilliseconds);
 		}
 		#endregion
-		#region LoadServerCOmmand
+		#region PingServerCommand
+		public ICommand PingServerCommand { get; set; }
+		public bool CanPingServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Connected;
+		public void OnPingServerCommand(object e)
+		{
+			Console.WriteLine(Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Ping }));
+			//Console.WriteLine(Client.Ping().TotalMilliseconds);
+		}
+		#endregion
+		#region ConnectServerCOmmand
 		public ICommand ConnectServerCommand { get; set; }
-		public bool CanConnectServerCommand(object e) => Client == null || !Client.Connected;
+		public bool CanConnectServerCommand(object e) => Client.StatusClient == StatusClient.Disconnected;
 		public void OnConnectServerCommand(object e)
 		{
-			ConnectClient();
+			Task.Run(() => { ConnectClient(); });
 		}
 		#endregion
 		#endregion

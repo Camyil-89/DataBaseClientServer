@@ -24,7 +24,7 @@ namespace DataBaseClientServer.Models.SettingsServer
 						XmlSerializer xmls = new XmlSerializer(typeof(T));
 						xmls.Serialize(sw, obj);
 					}
-					using (FileStream sw = new FileStream(path, FileMode.Open))
+					using (FileStream sw = new FileStream(path, FileMode.OpenOrCreate))
 					{
 						var array = cipherAES.Encrypt(ms.ToArray());
 						sw.Write(array, 0, array.Length);

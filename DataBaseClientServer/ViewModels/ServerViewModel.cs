@@ -19,7 +19,7 @@ using System.Windows;
 
 namespace DataBaseClientServer.ViewModels
 {
-	class ServerViewModel : Base.ViewModel.BaseViewModel
+	public class ServerViewModel : Base.ViewModel.BaseViewModel
 	{
 
 		private Server _Server = new Server();
@@ -145,7 +145,7 @@ namespace DataBaseClientServer.ViewModels
 			StopServerListenerCommand = new LambdaCommand(OnStopServerListenerCommand, CanStopServerListenerCommand);
 			AddUserCommand = new LambdaCommand(OnAddUserCommand, CanAddUserCommand);
 			#endregion
-
+			Server.ServerViewModel = this;
 			BindingOperations.EnableCollectionSynchronization(Server.tcpClients, _lock); // доступ из всех потоков
 
 			Server.CallAnswer += Answer;

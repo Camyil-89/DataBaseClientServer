@@ -5,19 +5,48 @@ using System.Text;
 using System.Net;
 using System.Threading.Tasks;
 using System.Net.Sockets;
+using System.Threading;
+using System.Diagnostics;
+using System.Windows;
 
 namespace DataBaseClientServer.Models
 {
-	internal class Client
+	enum StatusClient: int
+	{
+		Connected = 1,
+		Disconnected = 2,
+		Connecting = 3,
+	}
+	internal class Client: Base.ViewModel.BaseViewModel
 	{
 		public IPAddress IPAddress { get; set; } = IPAddress.Parse("127.0.0.0");
 		public int Port { get; set; } = 32001;
-		private TcpClient _Client { get; set; }
+		private TcpClient _Client { get; set; } = new TcpClient();
+		public int TimeOut { get; set; } = 5000; // msc	
+		public int TimeOutConnect { get; set; } = 5000; // msc	
 		public int SizeBuffer { get; set; } = 2048;
-		public bool Connected { get => _Client.Connected; }
 
+		private StatusClient _StatusClient = StatusClient.Disconnected;
+		public StatusClient StatusClient
+		{ get => _StatusClient;
+			set 
+			{ 
+				Set(ref _StatusClient, value); 
+				if (value == StatusClient.Connecting) VisibilityConnecting = Visibility.Visible;
+				else VisibilityConnecting = Visibility.Collapsed;
+			} 
+		}
+		#region Connecting
+		private Visibility _VisibilityConnecting = Visibility.Collapsed;
+		public Visibility VisibilityConnecting { get => _VisibilityConnecting; set => Set(ref _VisibilityConnecting, value); }
+
+		#endregion
+		public bool IsAuthorization { get; set; } = false;
 		public delegate void Answer(API.Packet Packet);
 		private DateTime LastAnswer;
+		private API.Packet LastAnswerPacket;
+		private bool AwaitPacketResponse = false;
+
 		public event Answer CallAnswer;
 		private API.CipherAES cipherAES = new API.CipherAES();
 		public TimeSpan Ping()
@@ -32,21 +61,55 @@ namespace DataBaseClientServer.Models
 		{
 			try
 			{
+				StatusClient = StatusClient.Connecting;
 				_Client = new TcpClient();
-				_Client.Connect(IPAddress, Port);
+				if (!_Client.ConnectAsync(IPAddress, Port).Wait(TimeOutConnect))
+				{
+					StatusClient = StatusClient.Connecting;
+					return false;
+				}
 				Task.Run(() => { ClientListener(); });
 				return true;
-			} catch (Exception ex) { }
-
+			} catch (Exception ex) { Console.WriteLine(ex); }
+			StatusClient = StatusClient.Disconnected;
 			return false;
 			
 		}
+		public API.Packet SendPacketAndWaitResponse(API.Packet packet)
+		{
+			if (API.Base.IsAuthorizationClientUse.Contains(packet.TypePacket) && !IsAuthorization) throw new API.Excepcion.ExcepcionIsAuthorizationClientUse();
+			AwaitPacketResponse = true;
+			LastAnswerPacket = null;
+			Stopwatch stopwatch = new Stopwatch();
+			stopwatch.Start();
+			API.Base.SendPacketClient(_Client, packet, cipherAES);
+			while (LastAnswerPacket == null)
+			{
+				if (stopwatch.ElapsedMilliseconds > TimeOut) throw new API.Excepcion.ExcepcionTimeOut();
+				if (!_Client.Connected) throw new API.Excepcion.ExcepcionClientConnectLose();
+				Thread.Sleep(1);
+			}
+			return LastAnswerPacket;
+		}
 		public void ClientListener()
 		{
+			StatusClient = StatusClient.Connected;
+			IsAuthorization = false;
 			NetworkStream networkStream = _Client.GetStream();
 			cipherAES.BaseKey();
 			API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.UpdateKey }, cipherAES);
-			while (_Client.Connected)
+			Task.Run(() => {
+				while(true)
+				{
+					if (!_Client.Client.Connected)
+					{
+						StatusClient = StatusClient.Disconnected;
+						break;
+					}
+				}
+				
+			});
+			while (_Client.Connected && _Client.Client.Connected)
 			{
 				try
 				{
@@ -60,22 +123,29 @@ namespace DataBaseClientServer.Models
 					LastAnswer = DateTime.Now;
 					switch (packet.TypePacket)
 					{
-						case API.TypePacket.Ping:
-							break;
 						case API.TypePacket.Termination:
 							_Client.Dispose();
 							return;
+						case API.TypePacket.Authorization:
+							LastAnswerPacket = packet;
+							if (AwaitPacketResponse) AwaitPacketResponse = false;
+							IsAuthorization = true;
+							break;
 						case API.TypePacket.UpdateKey:
 							API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.ConfirmKey }, cipherAES);
 							cipherAES = (API.CipherAES)packet.Data;
 							break;
 						default:
-							if (packet != null) CallAnswer.Invoke(packet);
+							LastAnswerPacket = packet;
+							if (AwaitPacketResponse) AwaitPacketResponse = false;
+							else if (packet != null) CallAnswer.Invoke(packet);
 							break;
 					}
 				}
-				catch { }
+				catch (Exception ex) { Log.WriteLine(ex); }
 			}
+			Log.WriteLine("StatusClient.Disconnected");
+			StatusClient = StatusClient.Disconnected;
 		}
 	}
 }
