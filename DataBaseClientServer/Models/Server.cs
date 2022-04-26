@@ -10,6 +10,7 @@ using DataBaseClientServer.Models.database;
 using System.Collections.ObjectModel;
 using DataBaseClientServer.Models.SettingsServer;
 using DataBaseClientServer.ViewModels;
+using API;
 
 namespace DataBaseClientServer.Models
 {
@@ -60,12 +61,16 @@ namespace DataBaseClientServer.Models
 			Log.WriteLine($"Port: {Port}");
 			Work = true;
 			Task.Run(() => {
-				while (Work)
+				try
 				{
-					var client = tcpListener.AcceptTcpClient();
-					Log.WriteLine($"Connect client: {client.Client.RemoteEndPoint}");
-					Task.Run(() => { StartClient(client, Key_aes, IV_aes); });
-				}
+					while (Work)
+					{
+						var client = tcpListener.AcceptTcpClient();
+						Log.WriteLine($"Connect client: {client.Client.RemoteEndPoint}");
+						Task.Run(() => { StartClient(client, Key_aes, IV_aes); });
+					}
+				} catch { Work = false; }
+				
 			});
 		}
 		/// <summary>
@@ -98,6 +103,7 @@ namespace DataBaseClientServer.Models
 			tcpClients.Add(tCPClient);
 			bool IsAuthorization = false;
 			int CountPacketRecive = 0;
+			EndPoint endPoint = Client.Client.RemoteEndPoint;
 			while (Client.Connected)
 			{
 				try
@@ -148,7 +154,7 @@ namespace DataBaseClientServer.Models
 				}
 				catch { }
 			}
-			Log.WriteLine($"Client disconnect: {Client.Client.RemoteEndPoint}");
+			Log.WriteLine($"Client disconnect: {endPoint}");
 			tcpClients.Remove(tCPClient);
 		}
 	}

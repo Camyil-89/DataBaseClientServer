@@ -1,12 +1,17 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace DataBaseClientServer.Models.SettingsServer
+namespace API.XML
 {
-	internal static class ProviderXML
+	public static class ProviderXML
 	{
-		private static byte[] KEY_AES = new byte[16] { 0xaa, 0x11, 0x23, 0x54, 0x32, 0x40, 0x10, 0x01, 0xd, 0xdd, 0x23, 0x90, 0x01, 0x12, 0x11, 0x02 };
-		private static byte[] IV_AES = { 0xaa, 0x01, 0x0f, 0x00, 0x0b, 0x30, 0x03, 0x00, 0x60, 0x60, 0x40, 0x67, 0x01, 0x05, 0x80, 0x0f };
+		public static byte[] KEY_AES { get; set; }
+		public static byte[] IV_AES { get; set; }
 
 		public static bool Encrypt = true;
 		public static void Save<T>(string path, object obj)
@@ -103,7 +108,7 @@ namespace DataBaseClientServer.Models.SettingsServer
 					}
 				}
 			}
-			
+
 		}
 	}
 }

@@ -59,7 +59,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Models\Client.cs" />
-    <Compile Include="Models\Log.cs" />
+    <Compile Include="Models\Settings\ClientSerttings.cs" />
+    <Compile Include="Models\Settings\ProviderXML.cs" />
     <Compile Include="ViewModels\ClientViewModel.cs" />
     <Page Include="ClientWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

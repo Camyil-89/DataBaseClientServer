@@ -8,6 +8,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Diagnostics;
 using System.Windows;
+using DataBaseClientServer.Models.Settings;
+using API;
 
 namespace DataBaseClientServer.Models
 {
@@ -19,12 +21,12 @@ namespace DataBaseClientServer.Models
 	}
 	internal class Client: Base.ViewModel.BaseViewModel
 	{
-		public IPAddress IPAddress { get; set; } = IPAddress.Parse("127.0.0.0");
-		public int Port { get; set; } = 32001;
+		
 		private TcpClient _Client { get; set; } = new TcpClient();
 		public int TimeOut { get; set; } = 5000; // msc	
 		public int TimeOutConnect { get; set; } = 5000; // msc	
 		public int SizeBuffer { get; set; } = 2048;
+		public ClientSerttings ClientSerttings { get; set; }
 
 		private StatusClient _StatusClient = StatusClient.Disconnected;
 		public StatusClient StatusClient
@@ -63,9 +65,9 @@ namespace DataBaseClientServer.Models
 			{
 				StatusClient = StatusClient.Connecting;
 				_Client = new TcpClient();
-				if (!_Client.ConnectAsync(IPAddress, Port).Wait(TimeOutConnect))
+				if (!_Client.ConnectAsync(new IPAddress(ClientSerttings.ClientConnect.IPAddressServer), ClientSerttings.ClientConnect.Port).Wait(TimeOutConnect))
 				{
-					StatusClient = StatusClient.Connecting;
+					StatusClient = StatusClient.Disconnected;
 					return false;
 				}
 				Task.Run(() => { ClientListener(); });
@@ -96,7 +98,8 @@ namespace DataBaseClientServer.Models
 			StatusClient = StatusClient.Connected;
 			IsAuthorization = false;
 			NetworkStream networkStream = _Client.GetStream();
-			cipherAES.BaseKey();
+			cipherAES.AES_KEY = ClientSerttings.KernelSettings.KeyAES;
+			cipherAES.AES_IV = ClientSerttings.KernelSettings.IV_AES;
 			API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.UpdateKey }, cipherAES);
 			Task.Run(() => {
 				while(true)

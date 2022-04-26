@@ -16,6 +16,8 @@ using DataBaseClientServer.Models;
 using DataBaseClientServer.Models.SettingsServer;
 using DataBaseClientServer.Models.database;
 using System.Windows;
+using API;
+using API.XML;
 
 namespace DataBaseClientServer.ViewModels
 {
@@ -129,7 +131,8 @@ namespace DataBaseClientServer.ViewModels
 		public string UserPassword { get => _UserPassword; set => Set(ref _UserPassword, value); }
 		#endregion
 
-
+		private byte[] KEY_LOAD = new byte[16] { 0xaa, 0x11, 0x23, 0x54, 0x32, 0x40, 0x10, 0x01, 0xd, 0xdd, 0x23, 0x90, 0x01, 0x12, 0x11, 0x02 };
+		private byte[] IV_LOAD = new byte[16] { 0xaa, 0x01, 0x0f, 0x00, 0x0b, 0x30, 0x03, 0x00, 0x60, 0x60, 0x40, 0x67, 0x01, 0x05, 0x80, 0x0f };
 		private static object _lock = new object();
 		#region Kernel
 
@@ -146,6 +149,8 @@ namespace DataBaseClientServer.ViewModels
 			AddUserCommand = new LambdaCommand(OnAddUserCommand, CanAddUserCommand);
 			#endregion
 			Server.ServerViewModel = this;
+			ProviderXML.IV_AES = IV_LOAD;
+			ProviderXML.KEY_AES = KEY_LOAD;
 			BindingOperations.EnableCollectionSynchronization(Server.tcpClients, _lock); // доступ из всех потоков
 
 			Server.CallAnswer += Answer;
