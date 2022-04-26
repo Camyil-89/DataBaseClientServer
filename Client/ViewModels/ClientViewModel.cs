@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using DataBaseClientServer;
 using DataBaseClientServer.Base.Command;
-using API;
 using API.XML;
+using API.Logging;
 using DataBaseClientServer.Models;
 using DataBaseClientServer.Models.Settings;
 using System.IO;
 using Client;
 using System.Windows;
+using System.Threading;
 
 namespace DataBaseClientServer.ViewModels
 {
@@ -41,6 +42,26 @@ namespace DataBaseClientServer.ViewModels
 		public bool CheckVisibilytiIvAES { get => _CheckVisibilytiIvAES; set { Set(ref _CheckVisibilytiIvAES, value); if (value == true) VisibilityIvAES = Visibility.Visible; else VisibilityIvAES = Visibility.Collapsed; } }
 
 		#endregion
+		#region Авторизация
+		private string _PasswordBoxUser = "";
+		public string PasswordBoxUser { get => _PasswordBoxUser; set
+			{
+				Set(ref _PasswordBoxUser, value);
+				if (CheckBoxHide) ClientSerttings.KernelSettings.PasswordUser = value;
+			} }
+
+		private bool _CheckBoxHide = false;
+		public bool CheckBoxHide { get => _CheckBoxHide; set {
+				Set(ref _CheckBoxHide, value);
+				if (value) PasswordBoxUser = ClientSerttings.KernelSettings.PasswordUser;
+				else PasswordBoxUser = "";
+			} }
+		private string _InfoConnectText = "";
+		public string InfoConnectText { get => _InfoConnectText; set => Set(ref _InfoConnectText, value); }
+
+		private int _PingToServer = -1;
+		public int PingToServer { get => _PingToServer; set => Set(ref _PingToServer, value); }
+		#endregion
 
 		#region Kernel
 		public ClientViewModel()
@@ -50,13 +71,18 @@ namespace DataBaseClientServer.ViewModels
 			ConnectServerCommand = new LambdaCommand(OnConnectServerCommand, CanConnectServerCommand);
 			PingServerCommand = new LambdaCommand(OnPingServerCommand, CanPingServerCommand);
 			AuthorizationServerCommand = new LambdaCommand(OnAuthorizationServerCommand, CanAuthorizationServerCommand);
-			Client.CallAnswer += Answer;
-			Client.ClientSerttings = ClientSerttings;
+			DisconnectServerCommand = new LambdaCommand(OnDisconnectServerCommand, CanDisconnectServerCommand);
+			SetSettingsClient();
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
 			Task.Run(() => { LoadXML(); });
 		}
-
+		private void SetSettingsClient()
+		{
+			Client.CallAnswer += Answer;
+			Client.CallDisconnect += Disconnect;
+			Client.ClientSerttings = ClientSerttings;
+		}
 		private void Current_Exit(object sender, System.Windows.ExitEventArgs e)
 		{
 			SaveXML();
@@ -73,6 +99,15 @@ namespace DataBaseClientServer.ViewModels
 				}
 			}
 			catch (Exception ex) { ClientSerttings.ClientConnect= new ClientConnect(); Log.WriteLine(ex); }
+			try
+			{
+				if (File.Exists($"{Directory.GetCurrentDirectory()}\\Settings\\KernelSettings.xml"))
+				{
+					ClientSerttings.KernelSettings = ProviderXML.Load<KernelSettings>($"{Directory.GetCurrentDirectory()}\\Settings\\KernelSettings.xml");
+				}
+			}
+			catch (Exception ex) { ClientSerttings.ClientConnect = new ClientConnect(); Log.WriteLine(ex); }
+			if (ClientSerttings.KernelSettings.AutoStartClient) Task.Run(() => { ConnectClient(); });
 		}
 		void SaveXML()
 		{
@@ -80,6 +115,11 @@ namespace DataBaseClientServer.ViewModels
 			try
 			{
 				ProviderXML.Save<ClientConnect>($"{Directory.GetCurrentDirectory()}\\Settings\\ConnectClient.xml", ClientSerttings.ClientConnect);
+			}
+			catch { }
+			try
+			{
+				ProviderXML.Save<KernelSettings>($"{Directory.GetCurrentDirectory()}\\Settings\\KernelSettings.xml", ClientSerttings.KernelSettings);
 			}
 			catch { }
 		}
@@ -91,8 +131,16 @@ namespace DataBaseClientServer.ViewModels
 		public bool CanAuthorizationServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Connected && !Client.IsAuthorization;
 		public void OnAuthorizationServerCommand(object e)
 		{
-			Console.WriteLine(Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Authorization, Data = new API.Authorization() { Login = "test", Password = "test" } }));
+			Console.WriteLine(Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Authorization, Data = new API.Authorization() { Login = "test", Password = "test" } }, 1));
 			//Console.WriteLine(Client.Ping().TotalMilliseconds);
+		}
+		#endregion
+		#region DisconnectServerCommand
+		public ICommand DisconnectServerCommand { get; set; }
+		public bool CanDisconnectServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Connected;
+		public void OnDisconnectServerCommand(object e)
+		{
+			DisconnectClient();
 		}
 		#endregion
 		#region PingServerCommand
@@ -100,26 +148,80 @@ namespace DataBaseClientServer.ViewModels
 		public bool CanPingServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Connected;
 		public void OnPingServerCommand(object e)
 		{
-			Console.WriteLine(Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Ping }));
+			Console.WriteLine(Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Ping }, 1));
 			//Console.WriteLine(Client.Ping().TotalMilliseconds);
 		}
 		#endregion
 		#region ConnectServerCOmmand
 		public ICommand ConnectServerCommand { get; set; }
-		public bool CanConnectServerCommand(object e) => Client.StatusClient == StatusClient.Disconnected;
+		public bool CanConnectServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Disconnected;
 		public void OnConnectServerCommand(object e)
 		{
 			Task.Run(() => { ConnectClient(); });
 		}
 		#endregion
 		#endregion
+		private void Disconnect(string message)
+		{
+			PingToServer = -1;
+			if (message != null) InfoConnectText = message;
+		}
 		private void Answer(API.Packet Packet)
 		{
 			Console.WriteLine(Packet);
 		}
+		private void PingServer()
+		{
+			while (Client != null && Client.StatusClient == StatusClient.Connected)
+			{
+				try
+				{
+					var packet = Client.SendPacketAndWaitResponse(new API.Packet()
+					{
+						TypePacket = API.TypePacket.Ping,
+						Data = DateTime.Now,
+					}, 1);
+					PingToServer = (int)((DateTime.Now - (DateTime)packet.Packets[0].Data).TotalMilliseconds);
+				}
+				catch { }
+				Thread.Sleep(1000);
+			}
+			Log.WriteLine("PingServer: Dispose");
+		}
+		private void DisconnectClient()
+		{
+			Client.Disconnect();
+			Client = new Models.Client();
+			Disconnect(null);
+			InfoConnectText = "Подключение не установлено!";
+		}
 		private void ConnectClient()
 		{
-			Client.Connect();
+			Client = new Models.Client();
+			SetSettingsClient();
+			InfoConnectText = "";
+			if (ClientSerttings.KernelSettings.LoginUser != "" && ClientSerttings.KernelSettings.PasswordUser != "")
+			{
+				if (Client.Connect())
+				{
+					while (!Client.FirstUpdateKey) Thread.Sleep(1);
+					var packet = Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Authorization,
+						Data = new API.Authorization() { Login = ClientSerttings.KernelSettings.LoginUser, Password = ClientSerttings.KernelSettings.PasswordUser} }, 1);
+					if (packet.Packets[0].TypePacket == API.TypePacket.AuthorizationFailed)
+					{
+						var data_answer = (API.TypeErrorAuthorization)packet.Packets[0].Data;
+						if (data_answer == API.TypeErrorAuthorization.Login) InfoConnectText = "Неверный логин!";
+						else if (data_answer == API.TypeErrorAuthorization.Passsword) InfoConnectText = "Неверный пароль!";
+						Client = new Models.Client();
+					}
+					else
+					{
+						InfoConnectText = "Подключение установлено!";
+						Task.Run(() => { PingServer(); });
+					}
+				}
+			}
+			GC.Collect();
 		}
 	}
 }

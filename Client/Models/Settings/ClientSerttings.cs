@@ -24,6 +24,15 @@ namespace DataBaseClientServer.Models.Settings
 
 		private byte[] _Key_AES = API.CipherAES.KEY_base;
 		public byte[] KeyAES { get => _Key_AES; set => Set(ref _Key_AES, value); }
+
+		private string _PasswordUser = "";
+		public string PasswordUser { get => _PasswordUser; set => Set(ref _PasswordUser, value); }
+
+		private string _LoginUser = "";
+		public string LoginUser { get => _LoginUser; set => Set(ref _LoginUser, value); }
+
+		private bool _AutoStartClient = false;
+		public bool AutoStartClient { get => _AutoStartClient; set => Set(ref _AutoStartClient, value); }
 	}
 	public class ClientConnect : BaseViewModel
 	{

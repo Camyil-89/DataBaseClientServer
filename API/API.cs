@@ -7,6 +7,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using API.Logging;
 
 namespace API
 {
@@ -15,7 +16,7 @@ namespace API
 		User = 1,
 		Admin = 100,
 	}
-	public enum TypeError : int
+	public enum TypeErrorAuthorization : int
 	{
 		Login = 1,
 		Passsword = 2,
@@ -35,6 +36,7 @@ namespace API
 		public static List<API.TypePacket> IsAuthorizationClientUse = new List<API.TypePacket>() { API.TypePacket.Ping };
 		public static void SendPacketClient(TcpClient client, API.Packet packet, CipherAES cipherAES)
 		{
+			Log.WriteLine($"[{client.Client.LocalEndPoint} > {client.Client.RemoteEndPoint}] {packet.TypePacket} {packet.UID}");
 			NetworkStream networkStream = client.GetStream();
 			var byte_packet = Packet.ToByteArray(packet, cipherAES);
 			networkStream.Write(byte_packet, 0, byte_packet.Length);
@@ -107,12 +109,6 @@ namespace API
 		}
 	}
 	[Serializable]
-	public class ResponseError
-	{
-		public TypeError TypeError { get; set; }
-		public string Info { get; set; }
-	}
-	[Serializable]
 	public class Authorization
 	{
 		public string Login { get; set; }
@@ -122,6 +118,7 @@ namespace API
 	public class Packet
 	{
 		public TypePacket TypePacket { get; set; }
+		public Guid UID { get; set; } = Guid.NewGuid();
 		public object Data { get; set; } = null;
 		public override string ToString()
 		{

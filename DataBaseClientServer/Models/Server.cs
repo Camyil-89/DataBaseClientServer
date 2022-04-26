@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Net.Sockets;
 using System.IO;
+using API.Logging;
 using DataBaseClientServer.Models.database;
 using System.Collections.ObjectModel;
 using DataBaseClientServer.Models.SettingsServer;
 using DataBaseClientServer.ViewModels;
-using API;
 
 namespace DataBaseClientServer.Models
 {
@@ -21,6 +21,8 @@ namespace DataBaseClientServer.Models
 		private int _port = 32001;
 		public int Port { get => _port; set => Set(ref _port, value); }
 		public int CountClient { get => tcpClients.Count; }
+
+		public int MaxCountErrorPacket = 10;
 
 		private IPAddress _IPAddress = IPAddress.Parse("127.0.0.0");
 		public IPAddress IPAddress { get => _IPAddress; set => Set(ref _IPAddress, value); }
@@ -43,6 +45,14 @@ namespace DataBaseClientServer.Models
 		public Client GetClientFromDataBase(string Login, string Password)
 		{
 			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Name == Login && i.Password == Password);
+		}
+		public Client GetClientFromDataBaseLogin(string Login)
+		{
+			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Name == Login);
+		}
+		public Client GetClientFromDataBasePassword(string Password)
+		{
+			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Password == Password);
 		}
 		public bool FindUserInDataBase(string Login, string Password)
 		{
@@ -89,6 +99,15 @@ namespace DataBaseClientServer.Models
 			}
 			tcpClients.Clear();
 		}
+		private API.Packet Authorization(API.Packet packet)
+		{
+			API.Packet authorization = new API.Packet();
+			var auth = (API.Authorization)packet.Data;
+			var client = GetClientFromDataBaseLogin(auth.Login);
+			if (client == null) return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = API.TypeErrorAuthorization.Login, UID = packet.UID };
+			if (client.Password != auth.Password) return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = API.TypeErrorAuthorization.Passsword, UID = packet.UID };
+			return new API.Packet() { TypePacket = API.TypePacket.Authorization, UID = packet.UID };
+		}
 		/// <summary>
 		/// Подключение клиента
 		/// </summary>
@@ -103,6 +122,7 @@ namespace DataBaseClientServer.Models
 			tcpClients.Add(tCPClient);
 			bool IsAuthorization = false;
 			int CountPacketRecive = 0;
+			int count_error_packet = 0;
 			EndPoint endPoint = Client.Client.RemoteEndPoint;
 			while (Client.Connected)
 			{
@@ -115,11 +135,15 @@ namespace DataBaseClientServer.Models
 						networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
 					}
 					while (networkStream.DataAvailable);
-					Log.WriteLine($"[{Client.Client.RemoteEndPoint}] Packet lenght: {myReadBuffer.Length}");
+					Log.WriteLine($"[{Client.Client.RemoteEndPoint}] {count_error_packet} Packet lenght: {myReadBuffer.Length}");
 					API.Packet packet = API.Packet.FromByteArray(myReadBuffer, cipherAES);
-					if (!IsAuthorization && API.Base.IsAuthorizationClientUse.Contains(packet.TypePacket)) continue; 
+					count_error_packet = 0;
+					if (!IsAuthorization && API.Base.IsAuthorizationClientUse.Contains(packet.TypePacket)) continue;
 					switch (packet.TypePacket)
 					{
+						case API.TypePacket.Disconnect:
+							Client.Close();
+							break;
 						case API.TypePacket.Ping:
 							API.Base.SendPacketClient(Client, packet, cipherAES);
 							break;
@@ -133,11 +157,12 @@ namespace DataBaseClientServer.Models
 							cipherAES = updateCipherAES;
 							tCPClient.CipherAES = cipherAES;
 							Log.WriteLine($"[{Client.Client.RemoteEndPoint}] API.TypePacket.ConfirmKey: {tCPClient.CipherAES.AES_KEY.Length * 8} | {string.Join(";", tCPClient.CipherAES.AES_KEY)}");
+							API.Base.SendPacketClient(Client, new API.Packet() { TypePacket = API.TypePacket.ConfirmKey }, cipherAES);
 							break;
 						case API.TypePacket.Authorization:
-							IsAuthorization = FindUserInDataBase((packet.Data as API.Authorization).Login, (packet.Data as API.Authorization).Password);
-							if (IsAuthorization) API.Base.SendPacketClient(Client, new API.Packet() { TypePacket = API.TypePacket.Authorization }, cipherAES);
-							else API.Base.SendPacketClient(Client, new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed }, cipherAES);
+							var auth = Authorization(packet);
+							if (auth.TypePacket == API.TypePacket.Authorization) IsAuthorization = true;
+							API.Base.SendPacketClient(Client, auth, cipherAES);
 							Log.WriteLine($"[{Client.Client.RemoteEndPoint}] API.TypePacket.Authorization: {IsAuthorization}");
 							break;
 						default:
@@ -152,7 +177,7 @@ namespace DataBaseClientServer.Models
 						CountPacketRecive = 0;
 					}
 				}
-				catch { }
+				catch { count_error_packet++; if (count_error_packet == MaxCountErrorPacket) Client.Close(); }
 			}
 			Log.WriteLine($"Client disconnect: {endPoint}");
 			tcpClients.Remove(tCPClient);

@@ -18,6 +18,7 @@ using DataBaseClientServer.Models.database;
 using System.Windows;
 using API;
 using API.XML;
+using API.Logging;
 
 namespace DataBaseClientServer.ViewModels
 {
@@ -259,12 +260,13 @@ namespace DataBaseClientServer.ViewModels
 		/// </summary>
 		private void ChangeUser()
 		{
-			var find = Settings.Clients.FirstOrDefault((i) => i.Name == UserName);
+			var find = Settings.Clients.FirstOrDefault((i) => i.Name == UserName && i.UID != Settings.Clients[SelectUser].UID);
 			if (find == null)
 			{
 				Settings.Clients[SelectUser].Name = UserName;
 				Settings.Clients[SelectUser].Password = UserPassword;
 				Settings.Clients[SelectUser].AccessLevel = _AccessLevelUser;
+				MessageBox.Show($"Изменения внесены!", "Уведомление");
 			}
 			else MessageBox.Show($"Пользователь с именем \"{UserName}\" уже добавлен", "Уведомление");
 		}
@@ -289,6 +291,7 @@ namespace DataBaseClientServer.ViewModels
 				UserName = "";
 				UserPassword = "";
 				AccessLevelUser = -1;
+				MessageBox.Show($"Пользователь успешно добавлен!", "Уведомление");
 			}
 			else MessageBox.Show($"Пользователь с именем \"{UserName}\" уже добавлен", "Уведомление");
 		}

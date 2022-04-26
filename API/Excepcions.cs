@@ -18,4 +18,8 @@ namespace API.Excepcion
 	{
 		public override string Message => "Для использования этого запроса требуется авторизация со стороны сервера.";
 	}
+	public class ExcepcionFirstUpdateKey: Exception
+	{
+		public override string Message => "Клиент и сервер не успели обменяться первичными ключами при подключении!";
+	}
 }
