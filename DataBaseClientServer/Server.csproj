@@ -38,6 +38,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ExplorerDialog">
+      <HintPath>..\..\..\cs\Lib\ExplorerDialog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />

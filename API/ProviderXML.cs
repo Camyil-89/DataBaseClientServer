@@ -14,7 +14,7 @@ namespace API.XML
 		public static byte[] KEY_AES { get; set; }
 		public static byte[] IV_AES { get; set; }
 
-		public static bool Encrypt = true;
+		public static bool Encrypt = false;
 		public static void Save<T>(string path, object obj)
 		{
 			Log.WriteLine($"Save: {path}");

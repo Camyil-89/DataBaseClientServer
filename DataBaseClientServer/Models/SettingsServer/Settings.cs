@@ -1,13 +1,17 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Windows.Media;
 
 namespace DataBaseClientServer.Models.SettingsServer
 {
+	[Serializable]
 	public class Settings: Base.ViewModel.BaseViewModel
 	{
 		private ServerSettings _ServerSettings = new ServerSettings();
 		public ServerSettings ServerSettings { get => _ServerSettings; set => Set(ref _ServerSettings, value); }
 		public ObservableCollection<Client> Clients { get; set; } = new ObservableCollection<Client>();
 	}
+	[Serializable]
 	public class ServerSettings: Base.ViewModel.BaseViewModel
 	{
 		private byte[] _IV_AES = API.CipherAES.IV_base;
@@ -20,5 +24,8 @@ namespace DataBaseClientServer.Models.SettingsServer
 
 		private bool _AutoStartServer = false;
 		public bool AutoStartServer { get => _AutoStartServer; set => Set(ref _AutoStartServer, value); }
+
+		private ObservableCollection<string> _PathsToDataBase = new ObservableCollection<string>();
+		public ObservableCollection<string> PathsToDataBase { get => _PathsToDataBase; set => Set(ref _PathsToDataBase, value); }
 	}
 }

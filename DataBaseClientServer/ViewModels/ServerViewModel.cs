@@ -19,6 +19,7 @@ using System.Windows;
 using API;
 using API.XML;
 using API.Logging;
+using System.Windows.Media;
 
 namespace DataBaseClientServer.ViewModels
 {
@@ -125,13 +126,26 @@ namespace DataBaseClientServer.ViewModels
 				}
 			}
 		}
+		private Client _SelectedUser;
+		public Client SelectedUser { get => _SelectedUser; set 
+			{
+				Set(ref _SelectedUser, value);
+				if (SelectMode != 0) SelectUser = Settings.Clients.IndexOf(SelectedUser);
+			} }
+
 		private string _UserName = "";
 		public string UserName { get => _UserName; set => Set(ref _UserName, value); }
 
 		private string _UserPassword = "";
 		public string UserPassword { get => _UserPassword; set => Set(ref _UserPassword, value); }
 		#endregion
+		#region добавление файлов баз данных и удаление
+		private DataBaseConnectPath _SelectPathDataBase;
+		public DataBaseConnectPath SelectPathDataBase { get => _SelectPathDataBase; set => Set(ref _SelectPathDataBase, value); }
 
+		private ObservableCollection<DataBaseConnectPath> _PathsToDataBase = new ObservableCollection<DataBaseConnectPath>();
+		public ObservableCollection<DataBaseConnectPath> PathsToDataBase { get => _PathsToDataBase; set => Set(ref _PathsToDataBase, value); }
+		#endregion
 		private byte[] KEY_LOAD = new byte[16] { 0xaa, 0x11, 0x23, 0x54, 0x32, 0x40, 0x10, 0x01, 0xd, 0xdd, 0x23, 0x90, 0x01, 0x12, 0x11, 0x02 };
 		private byte[] IV_LOAD = new byte[16] { 0xaa, 0x01, 0x0f, 0x00, 0x0b, 0x30, 0x03, 0x00, 0x60, 0x60, 0x40, 0x67, 0x01, 0x05, 0x80, 0x0f };
 		private static object _lock = new object();
@@ -148,6 +162,7 @@ namespace DataBaseClientServer.ViewModels
 			StartServerListenerCommand = new LambdaCommand(OnStartServerListenerCommand, CanStartServerListenerCommand);
 			StopServerListenerCommand = new LambdaCommand(OnStopServerListenerCommand, CanStopServerListenerCommand);
 			AddUserCommand = new LambdaCommand(OnAddUserCommand, CanAddUserCommand);
+			AddDataBasePathCommand = new LambdaCommand(OnAddDataBasePathCommand, CanAddDataBasePathCommand);
 			#endregion
 			Server.ServerViewModel = this;
 			ProviderXML.IV_AES = IV_LOAD;
@@ -198,6 +213,9 @@ namespace DataBaseClientServer.ViewModels
 			catch (Exception ex) { Settings.Clients = new ObservableCollection<Client>(); Log.WriteLine(ex); }
 			if (Settings.ServerSettings.AutoStartServer) Task.Run(() => { StartServer(); });
 			Log.WriteLine("LoadXML: true");
+			foreach (var i in Settings.ServerSettings.PathsToDataBase) PathsToDataBase.Add(new DataBaseConnectPath() { Path = i, IsEnable = File.Exists(i) });
+			//Settings.ServerSettings.PathsToDataBase.Add(new DataBaseConnectPath() { Path = "test", IsEnable = false });
+			//Settings.ServerSettings.PathsToDataBase.Add(new DataBaseConnectPath() { Path = "test.txt", IsEnable = true });
 			//Settings.Clients.Add(new Client() { AccessLevel = API.AccessLevel.Admin, Name = "test2", Password = "123", UID = Client.GenerateUIDClient(Settings.Clients)});
 			//Settings.Clients.Add(new Client() { AccessLevel = API.AccessLevel.User, Name = "test2", Password = "123", UID = Client.GenerateUIDClient(Settings.Clients)});
 		}
@@ -207,6 +225,8 @@ namespace DataBaseClientServer.ViewModels
 		private void SaveXML()
 		{
 			Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}\\Settings");
+			Settings.ServerSettings.PathsToDataBase.Clear();
+			foreach (var i in PathsToDataBase) Settings.ServerSettings.PathsToDataBase.Add(i.Path);
 			try
 			{
 				ProviderXML.Save<ObservableCollection<Client>>($"{Directory.GetCurrentDirectory()}\\Settings\\Clients.xml", Settings.Clients);
@@ -223,6 +243,21 @@ namespace DataBaseClientServer.ViewModels
 
 
 		#region Commands
+		#region AddDataBasePath
+		public ICommand AddDataBasePathCommand { get; set; }
+		public bool CanAddDataBasePathCommand(object e) => true;
+		public void OnAddDataBasePathCommand(object e)
+		{
+			var list_paths = ExplorerDialog.FilePicker.ShowDialog(true, ";").Split(';');
+			if (list_paths.Length == 0) return;
+			foreach (var path in list_paths)
+			{
+				var find = PathsToDataBase.FirstOrDefault((i) => i.Path == path);
+				if (find != null) continue;
+				PathsToDataBase.Add(new DataBaseConnectPath() { Path = path, IsEnable = true });
+			}
+		}
+		#endregion
 		#region AddUser
 		public ICommand AddUserCommand { get; set; }
 		public bool CanAddUserCommand(object e)
@@ -354,5 +389,32 @@ namespace DataBaseClientServer.ViewModels
 		{
 			Log.WriteLine(Packet);
 		}
+	}
+
+	public class DataBaseConnectPath : Base.ViewModel.BaseViewModel
+	{
+		private string _Path;
+		public string Path { get => _Path; set => Set(ref _Path, value); }
+
+		private bool _IsEnable;
+		public bool IsEnable
+		{
+			get => _IsEnable; set
+			{
+				Set(ref _IsEnable, value);
+				if (IsEnable) Foreground = Brushes.Green;
+				else Foreground = Brushes.Red;
+
+			}
+		}
+
+		public string ShortPath { get {
+				var split_list = Path.Split('\\');
+				if (split_list.Length <= 2) return Path;
+				split_list = split_list.Skip(split_list.Length - 2).ToArray();
+				return String.Join("\\", split_list);
+			} }
+		private Brush _Foreground;
+		public Brush Foreground { get => _Foreground; set => Set(ref _Foreground, value); }
 	}
 }

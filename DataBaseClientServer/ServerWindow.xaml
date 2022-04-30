@@ -9,7 +9,8 @@
         Title="Server"
         Height="500"
         Width="600"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+		ResizeMode="CanMinimize">
     <Window.DataContext>
         <vm:ServerViewModel/>
     </Window.DataContext>
@@ -113,6 +114,27 @@
 									</Grid>
 								</StackPanel>
 							</GroupBox>
+							<GroupBox Header="Файлы баз данных">
+								<StackPanel Orientation="Vertical">
+									<ListBox Height="145" ItemsSource="{Binding PathsToDataBase}" SelectedItem="{Binding SelectPathDataBase}">
+										<ListBox.ItemTemplate>
+											<DataTemplate>
+												<StackPanel Orientation="Horizontal">
+													<!--<TextBlock Text="Путь: " FontSize="14" Foreground="{Binding Foreground}"/>-->
+													<TextBlock Text="{Binding ShortPath}" FontSize="14" Foreground="{Binding Foreground}"/>
+
+													<!--<TextBlock Margin="5 0 0 0" Text="активность: " FontSize="14" Foreground="{Binding Foreground}"/>
+													<TextBlock Text="{Binding IsEnable}" FontSize="14" Foreground="{Binding Foreground}"/>-->
+												</StackPanel>
+											</DataTemplate>
+										</ListBox.ItemTemplate>
+									</ListBox>
+									<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+										<Button Grid.Column="0" Content="Добавить" Width="125" Margin="5" FontSize="14" Height="27" Command="{Binding AddDataBasePathCommand}"/>
+										<Button Grid.Column="1" Content="Удалить" Width="125" Margin="5" FontSize="14" Height="27" Command=""/>
+									</StackPanel>
+								</StackPanel>
+							</GroupBox>
 						</StackPanel>
 					</ScrollViewer>
 					<Grid Grid.Column="1">
@@ -150,7 +172,7 @@
 							<RowDefinition Height="50"/>
 						</Grid.RowDefinitions>
 						<DockPanel Grid.Row="0">
-							<ListView Margin="5" ItemsSource="{Binding Settings.Clients}" FontSize="14">
+							<ListView Margin="5" ItemsSource="{Binding Settings.Clients}" FontSize="14" SelectedItem="{Binding SelectedUser}">
 								<ListView.View>
 									
 									<GridView>
