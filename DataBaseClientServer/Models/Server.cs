@@ -11,6 +11,7 @@ using DataBaseClientServer.Models.database;
 using System.Collections.ObjectModel;
 using DataBaseClientServer.Models.SettingsServer;
 using DataBaseClientServer.ViewModels;
+using System.Threading;
 
 namespace DataBaseClientServer.Models
 {
@@ -36,7 +37,7 @@ namespace DataBaseClientServer.Models
 
 		public ServerViewModel ServerViewModel { get; set; }
 
-		private int CountPacketReciveToUpdateKey = 10; // min 2
+		private int CountPacketReciveToUpdateKey = 3; // min 2
 
 		public ObservableCollection<TCPClient> tcpClients { get; set; } = new ObservableCollection<TCPClient>();
 
@@ -129,14 +130,16 @@ namespace DataBaseClientServer.Models
 				try
 				{
 					byte[] myReadBuffer = new byte[SizeBuffer];
+					List<byte> allData = new List<byte>();
 					do
 					{
-						CountPacketRecive++;
-						networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
-					}
-					while (networkStream.DataAvailable);
-					Log.WriteLine($"[{Client.Client.RemoteEndPoint}] {count_error_packet} Packet lenght: {myReadBuffer.Length}");
-					API.Packet packet = API.Packet.FromByteArray(myReadBuffer, cipherAES);
+						int numBytesRead = networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
+						if (numBytesRead == myReadBuffer.Length) allData.AddRange(myReadBuffer);
+						else if (numBytesRead > 0) allData.AddRange(myReadBuffer.Take(numBytesRead));
+					} while (networkStream.DataAvailable);
+
+					API.Packet packet = API.Packet.FromByteArray(allData.ToArray(), cipherAES);
+					Log.WriteLine($"[{Client.Client.RemoteEndPoint}] packet receive: {packet}");
 					count_error_packet = 0;
 					if (!IsAuthorization && API.Base.IsAuthorizationClientUse.Contains(packet.TypePacket)) continue;
 					switch (packet.TypePacket)
@@ -169,13 +172,13 @@ namespace DataBaseClientServer.Models
 							CallAnswer.Invoke(packet, Client, cipherAES);
 							break;
 					}
-					if (CountPacketRecive >= CountPacketReciveToUpdateKey)
-					{
-						updateCipherAES = new API.CipherAES();
-						updateCipherAES.CreateKey();
-						API.Base.SendPacketClient(Client, new API.Packet() { Data = updateCipherAES, TypePacket = API.TypePacket.UpdateKey }, cipherAES);
-						CountPacketRecive = 0;
-					}
+					//if (CountPacketRecive >= CountPacketReciveToUpdateKey)
+					//{
+					//	updateCipherAES = new API.CipherAES();
+					//	updateCipherAES.CreateKey();
+					//	API.Base.SendPacketClient(Client, new API.Packet() { Data = updateCipherAES, TypePacket = API.TypePacket.UpdateKey }, cipherAES);
+					//	CountPacketRecive = 0;
+					//}
 				}
 				catch (Exception e) { count_error_packet++; if (count_error_packet == MaxCountErrorPacket) Client.Close(); Log.WriteLine(e); }
 			}

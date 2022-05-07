@@ -21,6 +21,18 @@ namespace API
 		Login = 1,
 		Passsword = 2,
 	}
+	public enum TypeDataBasePacket: int
+	{
+		GetTableNames = 1,
+		GetTable = 1,
+	}
+	public enum InfoDataBasePacket: int
+	{
+		OK = 0,
+		AllocTrue = 1,
+		AllocFalse = 2,
+		NotExistsFile = 3,
+	}
 	public enum TypePacket : int
 	{
 		Disconnect = 2,
@@ -30,7 +42,21 @@ namespace API
 		ConfirmKey = 6,
 		Authorization = 7,
 		AuthorizationFailed = 8,
+
+
 		GetPathsDataBase = 9,
+		ConnectDataBase = 10,
+
+		SQLQuery = 11,
+		AllocTable = 12,
+	}
+	[Serializable]
+	public class DataBasePacket
+	{
+		public string Path { get; set; }
+		public dynamic Data { get; set; }
+		public TypeDataBasePacket Type {get;set;}
+		public InfoDataBasePacket Info { get; set; } = InfoDataBasePacket.OK;
 	}
 	public static class Base
 	{

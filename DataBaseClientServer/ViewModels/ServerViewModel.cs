@@ -401,13 +401,38 @@ namespace DataBaseClientServer.ViewModels
 			//	catch (Exception ex) { Console.WriteLine(ex); }
 			//});
 		}
+
+		private DataBasePacket CreateDataBasePacketDataTable(DataBasePacket dataBasePacket)
+		{
+			var dt = PathsToDataBase.FirstOrDefault((i) => i.Path == dataBasePacket.Path);
+			if (dt == null)
+			{
+				dataBasePacket.Info = InfoDataBasePacket.NotExistsFile;
+				return dataBasePacket;
+			}
+			dataBasePacket.Type = TypeDataBasePacket.GetTable;
+			dataBasePacket.Data = dt.DataBase.SendQuery($"SELECT * FROM {dataBasePacket.Data}");
+			Console.WriteLine(dataBasePacket.Data);
+			return dataBasePacket;
+		}
+		private DataBasePacket CreateDataBasePacketTables(DataBasePacket dataBasePacket)
+		{
+			var dt = PathsToDataBase.FirstOrDefault((i) => i.Path == dataBasePacket.Path);
+			if (dt == null)
+			{
+				dataBasePacket.Info = InfoDataBasePacket.NotExistsFile;
+				return dataBasePacket;
+			}
+			dataBasePacket.Data = dt.DataBase.GetTables();
+			dataBasePacket.Type = API.TypeDataBasePacket.GetTableNames;
+			return dataBasePacket;
+		}
 		/// <summary>
 		///  Получение ответа от клиента
 		/// </summary>
 		/// <param name="Packet"></param>
 		private void Answer(API.Packet Packet, TcpClient client, API.CipherAES cipherAES)
 		{
-			Console.WriteLine(Packet);
 			switch (Packet.TypePacket)
 			{
 				case TypePacket.GetPathsDataBase:
@@ -415,7 +440,22 @@ namespace DataBaseClientServer.ViewModels
 					foreach (var i in PathsToDataBase) paths.Add(i.Path);
 					Packet.Data = paths;
 					API.Base.SendPacketClient(client, Packet, cipherAES);
-					Console.WriteLine("2312312312");
+					break;
+				case TypePacket.ConnectDataBase:
+					try
+					{
+						Packet.Data = CreateDataBasePacketTables((API.DataBasePacket)Packet.Data);
+						API.Base.SendPacketClient(client, Packet, cipherAES);
+					}
+					catch (Exception ex) { Console.WriteLine(ex); }
+					break;
+				case TypePacket.AllocTable:
+					try
+					{
+						Packet.Data = CreateDataBasePacketDataTable((API.DataBasePacket)Packet.Data);
+						API.Base.SendPacketClient(client, Packet, cipherAES);
+					}
+					catch (Exception ex) { Console.WriteLine(ex); }
 					break;
 			}
 			Log.WriteLine(Packet);
@@ -426,7 +466,8 @@ namespace DataBaseClientServer.ViewModels
 		CanConnect = 3,
 		ConnectAccess = 1,
 		NotWork = 0,
-		FileIsBusy = 2,
+		FileIsAlloc = 2,
+		TableIsAlloc = 4,
 	}
 	public class DataBaseConnectPath : Base.ViewModel.BaseViewModel
 	{
@@ -457,7 +498,10 @@ namespace DataBaseClientServer.ViewModels
 					case StatusConnectDataBase.NotWork:
 						Foreground = Brushes.Red;
 						break;
-					case StatusConnectDataBase.FileIsBusy:
+					case StatusConnectDataBase.FileIsAlloc:
+						Foreground = Brushes.Orange;
+						break;
+					case StatusConnectDataBase.TableIsAlloc:
 						Foreground = Brushes.Orange;
 						break;
 				}

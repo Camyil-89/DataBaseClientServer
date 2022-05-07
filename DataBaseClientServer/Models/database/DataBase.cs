@@ -37,19 +37,20 @@ namespace DataBaseClientServer.Models.database
 			}
 			return DtataBaseNames;
 		}
-		public void SendQuery(string query)
+		public DataTable SendQuery(string query)
 		{
 			OleDbDataAdapter myDataAdapter = new System.Data.OleDb.OleDbDataAdapter(query, myConnection);
-			DataSet myDataSet = new DataSet("Table");
-			myDataAdapter.Fill(myDataSet, "Table");
-			foreach (DataTable i in myDataSet.Tables)
-			{
-				Console.WriteLine(i);
-				foreach (DataRow j in i.Rows)
-				{
-					Console.WriteLine($"{string.Join(";" ,j.ItemArray)}");
-				}
-			}
+			DataTable dataTable = new DataTable();
+			myDataAdapter.Fill(dataTable);
+			return dataTable;
+			//foreach (DataTable i in myDataSet.Tables)
+			//{
+			//	Console.WriteLine(i);
+			//	foreach (DataRow j in i.Rows)
+			//	{
+			//		Console.WriteLine($"{string.Join(";" ,j.ItemArray)}");
+			//	}
+			//}
 		}
 	}
 }

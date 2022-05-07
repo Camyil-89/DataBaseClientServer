@@ -23,6 +23,7 @@ namespace DataBaseClientServer.Models
 	{
 		
 		private TcpClient _Client { get; set; } = new TcpClient();
+		public int TimeOutUpdateKeyAES { get; set; } = 10000; // msc
 		public int TimeOut { get; set; } = 5000; // msc	
 		public int TimeOutConnect { get; set; } = 5000; // msc	
 		public int SizeBuffer { get; set; } = 2048;
@@ -95,6 +96,9 @@ namespace DataBaseClientServer.Models
 		{
 			if (API.Base.IsAuthorizationClientUse.Contains(packet.TypePacket) && !IsAuthorization) throw new API.Excepcion.ExcepcionIsAuthorizationClientUse();
 			//if (!FirstUpdateKey) throw new API.Excepcion.ExcepcionFirstUpdateKey();
+
+			if (PacketsAwait.ContainsKey(packet.UID)) PacketsAwait.Remove(packet.UID);
+			PacketsAwait.Add(packet.UID, new AwaitPackets() { CountNeedReceive = CountNeedReceive });
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
 			while (UpdateKey || !FirstUpdateKey)
@@ -103,8 +107,6 @@ namespace DataBaseClientServer.Models
 				Thread.Sleep(1);
 			}
 			stopwatch.Restart();
-			if (PacketsAwait.ContainsKey(packet.UID)) PacketsAwait.Remove(packet.UID);
-			PacketsAwait.Add(packet.UID, new AwaitPackets() { CountNeedReceive = CountNeedReceive });
 			API.Base.SendPacketClient(_Client, packet, cipherAES);
 			while (PacketsAwait[packet.UID].CountNeedReceive > PacketsAwait[packet.UID].CountReceive)
 			{
@@ -112,7 +114,9 @@ namespace DataBaseClientServer.Models
 				if (!_Client.Connected) throw new API.Excepcion.ExcepcionClientConnectLose();
 				Thread.Sleep(1);
 			}
-			return PacketsAwait[packet.UID];
+			var x = PacketsAwait[packet.UID];
+			PacketsAwait.Remove(packet.UID);
+			return x;
 		}
 		public void Disconnect()
 		{
@@ -142,6 +146,21 @@ namespace DataBaseClientServer.Models
 			});
 			int TimeOutFirstUpdateKey = 3000;
 			Task.Run(() => {
+				Stopwatch sw = new Stopwatch();
+				sw.Start();
+				while (StatusClient != StatusClient.Disconnected)
+				{
+					//Console.WriteLine($"{FirstUpdateKey && sw.ElapsedMilliseconds >= TimeOutUpdateKeyAES && PacketsAwait.Count == 0} - {sw.ElapsedMilliseconds}");
+					if (FirstUpdateKey && sw.ElapsedMilliseconds >= TimeOutUpdateKeyAES && PacketsAwait.Count == 0 && !UpdateKey)
+					{
+						UpdateKey = true;
+						API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.UpdateKey }, cipherAES);
+						sw.Restart();
+					}
+					Thread.Sleep(1);
+				}
+			});
+			Task.Run(() => {
 				Stopwatch stopwatch= new Stopwatch();
 				stopwatch.Start();
 				while (!FirstUpdateKey)
@@ -154,17 +173,22 @@ namespace DataBaseClientServer.Models
 					}
 				}
 			});
+
+			API.CipherAES old_cipherAES = cipherAES;
 			while (_Client.Connected && _Client.Client.Connected)
 			{
 				try
 				{
 					byte[] myReadBuffer = new byte[SizeBuffer];
+					List<byte> allData = new List<byte>();
 					do
 					{
-						networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
-					}
-					while (networkStream.DataAvailable);
-					API.Packet packet = API.Packet.FromByteArray(myReadBuffer, cipherAES);
+						int numBytesRead = networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
+						if (numBytesRead == myReadBuffer.Length) allData.AddRange(myReadBuffer);
+						else if (numBytesRead > 0) allData.AddRange(myReadBuffer.Take(numBytesRead));
+					} while (networkStream.DataAvailable);
+
+					API.Packet packet = API.Packet.FromByteArray(allData.ToArray(), cipherAES);
 					LastAnswer = DateTime.Now;
 					switch (packet.TypePacket)
 					{
@@ -178,6 +202,7 @@ namespace DataBaseClientServer.Models
 							break;
 						case API.TypePacket.UpdateKey:
 							UpdateKey = true;
+							old_cipherAES = cipherAES;
 							API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.ConfirmKey }, cipherAES);
 							cipherAES = (API.CipherAES)packet.Data;
 							FirstUpdateKey = true;

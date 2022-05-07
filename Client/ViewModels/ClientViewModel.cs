@@ -16,11 +16,14 @@ using Client;
 using System.Windows;
 using System.Threading;
 using System.Collections.ObjectModel;
+using System.Windows.Data;
+using System.Data;
 
 namespace DataBaseClientServer.ViewModels
 {
 	class ClientViewModel : Base.ViewModel.BaseViewModel
 	{
+		private static object _lock = new object();
 		private ClientSerttings _ClientSerttings = new ClientSerttings();
 		public ClientSerttings ClientSerttings { get => _ClientSerttings; set => Set(ref _ClientSerttings, value); }
 
@@ -30,6 +33,9 @@ namespace DataBaseClientServer.ViewModels
 		private byte[] IV_LOAD = new byte[16] { 0xaa, 0x01, 0x0f, 0x00, 0x0b, 0x30, 0x03, 0x00, 0x60, 0x60, 0x40, 0x67, 0x01, 0x05, 0x80, 0x0f };
 
 		#region работа с базами данных
+		private bool BlockAllWorkInDataBase = false;
+		private string _SelectPathToDataBase;
+		public string SelectPathToDataBase { get => _SelectPathToDataBase; set => Set(ref _SelectPathToDataBase, value); }
 		public ObservableCollection<string> PathsToDataBase { get; set; } = new ObservableCollection<string>();
 		#endregion
 		#region Просмотр ключей шифрований
@@ -70,12 +76,14 @@ namespace DataBaseClientServer.ViewModels
 		#region Kernel
 		public ClientViewModel()
 		{
+			BindingOperations.EnableCollectionSynchronization(PathsToDataBase, _lock); // доступ из всех потоков
 			ProviderXML.IV_AES = IV_LOAD;
 			ProviderXML.KEY_AES = KEY_LOAD;
 			ConnectServerCommand = new LambdaCommand(OnConnectServerCommand, CanConnectServerCommand);
 			PingServerCommand = new LambdaCommand(OnPingServerCommand, CanPingServerCommand);
 			AuthorizationServerCommand = new LambdaCommand(OnAuthorizationServerCommand, CanAuthorizationServerCommand);
 			DisconnectServerCommand = new LambdaCommand(OnDisconnectServerCommand, CanDisconnectServerCommand);
+			ConnectDataBaseCommand = new LambdaCommand(OnConnectDataBaseCommand, CanConnectDataBaseCommand);
 			SetSettingsClient();
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
@@ -84,6 +92,8 @@ namespace DataBaseClientServer.ViewModels
 		}
 		private void SetSettingsClient()
 		{
+			SelectPathToDataBase = null;
+			PathsToDataBase.Clear();
 			Client.CallAnswer += Answer;
 			Client.CallDisconnect += Disconnect;
 			Client.ClientSerttings = ClientSerttings;
@@ -149,6 +159,51 @@ namespace DataBaseClientServer.ViewModels
 		#endregion
 
 		#region Commands
+		#region ConnectDataBaseCommand
+		public ICommand ConnectDataBaseCommand { get; set; }
+		public bool CanConnectDataBaseCommand(object e) => Client != null && 
+			Client.StatusClient == StatusClient.Connected &&
+			Client.IsAuthorization &&
+			SelectPathToDataBase != null &&
+			!BlockAllWorkInDataBase;
+		public void OnConnectDataBaseCommand(object e)
+		{
+			BlockAllWorkInDataBase = true;
+			Task.Run(() => {
+				try
+				{
+					API.DataBasePacket dataBasePacket = new API.DataBasePacket();
+					dataBasePacket.Path = SelectPathToDataBase;
+					var packet = (API.DataBasePacket)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.ConnectDataBase, Data = dataBasePacket }, 1).Packets[0].Data;
+					if (packet.Info == API.InfoDataBasePacket.OK)
+					{
+						Console.WriteLine($"{string.Join(";", packet.Data)}");
+						dataBasePacket.Data = packet.Data[0];
+						DataTable data_table = (DataTable)((API.DataBasePacket)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.AllocTable, Data = dataBasePacket }, 1).Packets[0].Data).Data;
+						foreach (DataRow j in data_table.Rows)
+						{
+							Console.WriteLine($"{string.Join(";", j.ItemArray)}");
+						}
+						foreach (DataColumn i in data_table.Columns)
+						{
+							Console.WriteLine(i.ColumnName);
+						}
+						DataRow dataRow = data_table.NewRow();
+						dataRow[data_table.Columns[1]] = "test";
+						dataRow[data_table.Columns[2]] = "123";
+						data_table.Rows.Add(dataRow);
+						foreach (DataRow j in data_table.Rows)
+						{
+							Console.WriteLine($"{string.Join(";", j.ItemArray)}");
+						}
+					}
+
+				}
+				catch (Exception ex){ Console.WriteLine(ex); }
+				BlockAllWorkInDataBase = false;
+			});
+		}
+		#endregion
 		#region AuthorizationServerCommand
 		public ICommand AuthorizationServerCommand { get; set; }
 		public bool CanAuthorizationServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Connected && !Client.IsAuthorization;
