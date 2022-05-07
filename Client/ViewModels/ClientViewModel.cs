@@ -15,6 +15,7 @@ using System.IO;
 using Client;
 using System.Windows;
 using System.Threading;
+using System.Collections.ObjectModel;
 
 namespace DataBaseClientServer.ViewModels
 {
@@ -28,6 +29,9 @@ namespace DataBaseClientServer.ViewModels
 		private byte[] KEY_LOAD = new byte[16] { 0xaa, 0x11, 0x23, 0x54, 0x32, 0x40, 0x10, 0x01, 0xd, 0xdd, 0x23, 0x90, 0x01, 0x12, 0x11, 0x02 };
 		private byte[] IV_LOAD = new byte[16] { 0xaa, 0x01, 0x0f, 0x00, 0x0b, 0x30, 0x03, 0x00, 0x60, 0x60, 0x40, 0x67, 0x01, 0x05, 0x80, 0x0f };
 
+		#region работа с базами данных
+		public ObservableCollection<string> PathsToDataBase { get; set; } = new ObservableCollection<string>();
+		#endregion
 		#region Просмотр ключей шифрований
 		private Visibility _VisibilityKeyAES = Visibility.Collapsed;
 		public Visibility VisibilityKeyAES { get => _VisibilityKeyAES; set => Set(ref _VisibilityKeyAES, value); }
@@ -76,6 +80,7 @@ namespace DataBaseClientServer.ViewModels
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
 			Task.Run(() => { LoadXML(); });
+			Task.Run(() => { InfoConnectTextUpdate(); });
 		}
 		private void SetSettingsClient()
 		{
@@ -87,7 +92,25 @@ namespace DataBaseClientServer.ViewModels
 		{
 			SaveXML();
 		}
-
+		private void InfoConnectTextUpdate()
+		{
+			while (true)
+			{
+				switch (Client.StatusClient)
+				{
+					case StatusClient.Connected:
+						InfoConnectText = "Подключение установлено!";
+						break;
+					case StatusClient.Disconnected:
+						InfoConnectText = "Подключение не установлено!";
+						break;
+					case StatusClient.Connecting:
+						InfoConnectText = "Подключение..";
+						break;
+				}
+				Thread.Sleep(250);
+			}
+		}
 		void LoadXML()
 		{
 			Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}\\Settings");
@@ -193,7 +216,6 @@ namespace DataBaseClientServer.ViewModels
 			Client.Disconnect();
 			Client = new Models.Client();
 			Disconnect(null);
-			InfoConnectText = "Подключение не установлено!";
 		}
 		private void ConnectClient()
 		{
@@ -209,15 +231,19 @@ namespace DataBaseClientServer.ViewModels
 						Data = new API.Authorization() { Login = ClientSerttings.KernelSettings.LoginUser, Password = ClientSerttings.KernelSettings.PasswordUser} }, 1);
 					if (packet.Packets[0].TypePacket == API.TypePacket.AuthorizationFailed)
 					{
-						var data_answer = (API.TypeErrorAuthorization)packet.Packets[0].Data;
-						if (data_answer == API.TypeErrorAuthorization.Login) InfoConnectText = "Неверный логин!";
-						else if (data_answer == API.TypeErrorAuthorization.Passsword) InfoConnectText = "Неверный пароль!";
+						//var data_answer = (API.TypeErrorAuthorization)packet.Packets[0].Data;
+						//if (data_answer == API.TypeErrorAuthorization.Login) InfoConnectText = "Неверный логин!";
+						//else if (data_answer == API.TypeErrorAuthorization.Passsword) InfoConnectText = "Неверный пароль!";
 						Client = new Models.Client();
 					}
 					else
 					{
-						InfoConnectText = "Подключение установлено!";
 						Task.Run(() => { PingServer(); });
+						foreach (var i in (List<string>)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.GetPathsDataBase }, 1).Packets[0].Data)
+						{
+							PathsToDataBase.Add(i);
+						}
+
 					}
 				}
 			}

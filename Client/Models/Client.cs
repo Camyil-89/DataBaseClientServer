@@ -82,6 +82,15 @@ namespace DataBaseClientServer.Models
 			return false;
 			
 		}
+		private void TimeOutException()
+		{
+			try
+			{
+				Disconnect();
+			}
+			catch { }
+			throw new API.Excepcion.ExcepcionTimeOut();
+		}
 		public AwaitPackets SendPacketAndWaitResponse(API.Packet packet, int CountNeedReceive)
 		{
 			if (API.Base.IsAuthorizationClientUse.Contains(packet.TypePacket) && !IsAuthorization) throw new API.Excepcion.ExcepcionIsAuthorizationClientUse();
@@ -90,7 +99,7 @@ namespace DataBaseClientServer.Models
 			stopwatch.Start();
 			while (UpdateKey || !FirstUpdateKey)
 			{
-				if (stopwatch.ElapsedMilliseconds > TimeOut) throw new API.Excepcion.ExcepcionTimeOut();
+				if (stopwatch.ElapsedMilliseconds > TimeOut) TimeOutException();
 				Thread.Sleep(1);
 			}
 			stopwatch.Restart();
@@ -99,7 +108,7 @@ namespace DataBaseClientServer.Models
 			API.Base.SendPacketClient(_Client, packet, cipherAES);
 			while (PacketsAwait[packet.UID].CountNeedReceive > PacketsAwait[packet.UID].CountReceive)
 			{
-				if (stopwatch.ElapsedMilliseconds > TimeOut) throw new API.Excepcion.ExcepcionTimeOut();
+				if (stopwatch.ElapsedMilliseconds > TimeOut) TimeOutException();
 				if (!_Client.Connected) throw new API.Excepcion.ExcepcionClientConnectLose();
 				Thread.Sleep(1);
 			}
@@ -163,9 +172,9 @@ namespace DataBaseClientServer.Models
 							_Client.Dispose();
 							return;
 						case API.TypePacket.Authorization:
-							if (PacketsAwait.ContainsKey(packet.UID)) { PacketsAwait[packet.UID].Packets.Add(packet); PacketsAwait[packet.UID].CountReceive++; }
-							IsAuthorization = true;
 							StatusClient = StatusClient.Connected;
+							IsAuthorization = true;
+							if (PacketsAwait.ContainsKey(packet.UID)) { PacketsAwait[packet.UID].Packets.Add(packet); PacketsAwait[packet.UID].CountReceive++; }
 							break;
 						case API.TypePacket.UpdateKey:
 							UpdateKey = true;

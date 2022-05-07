@@ -131,7 +131,7 @@
 									</ListBox>
 									<StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
 										<Button Grid.Column="0" Content="Добавить" Width="125" Margin="5" FontSize="14" Height="27" Command="{Binding AddDataBasePathCommand}"/>
-										<Button Grid.Column="1" Content="Удалить" Width="125" Margin="5" FontSize="14" Height="27" Command=""/>
+										<Button Grid.Column="1" Content="Удалить" Width="125" Margin="5" FontSize="14" Height="27" Command="{Binding RemoveDataBasePathCommand}"/>
 									</StackPanel>
 								</StackPanel>
 							</GroupBox>

@@ -27,7 +27,7 @@ namespace DataBaseClientServer.Models
 		private IPAddress _IPAddress = IPAddress.Parse("127.0.0.0");
 		public IPAddress IPAddress { get => _IPAddress; set => Set(ref _IPAddress, value); }
 
-		public delegate void Answer(API.Packet Packet);
+		public delegate void Answer(API.Packet Packet,TcpClient client, API.CipherAES cipherAES);
 		public event Answer CallAnswer;
 		public int SizeBuffer = 2048;
 
@@ -166,7 +166,7 @@ namespace DataBaseClientServer.Models
 							Log.WriteLine($"[{Client.Client.RemoteEndPoint}] API.TypePacket.Authorization: {IsAuthorization}");
 							break;
 						default:
-							if (packet != null) CallAnswer.Invoke(packet);
+							CallAnswer.Invoke(packet, Client, cipherAES);
 							break;
 					}
 					if (CountPacketRecive >= CountPacketReciveToUpdateKey)
@@ -177,7 +177,7 @@ namespace DataBaseClientServer.Models
 						CountPacketRecive = 0;
 					}
 				}
-				catch { count_error_packet++; if (count_error_packet == MaxCountErrorPacket) Client.Close(); }
+				catch (Exception e) { count_error_packet++; if (count_error_packet == MaxCountErrorPacket) Client.Close(); Log.WriteLine(e); }
 			}
 			Log.WriteLine($"Client disconnect: {endPoint}");
 			tcpClients.Remove(tCPClient);

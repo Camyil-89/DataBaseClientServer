@@ -30,16 +30,23 @@ namespace API
 		ConfirmKey = 6,
 		Authorization = 7,
 		AuthorizationFailed = 8,
+		GetPathsDataBase = 9,
 	}
 	public static class Base
 	{
+		public static bool LogPing = false;
 		public static List<API.TypePacket> IsAuthorizationClientUse = new List<API.TypePacket>() { API.TypePacket.Ping };
 		public static void SendPacketClient(TcpClient client, API.Packet packet, CipherAES cipherAES)
 		{
-			Log.WriteLine($"[{client.Client.LocalEndPoint} > {client.Client.RemoteEndPoint}] {packet.TypePacket} {packet.UID}");
+			LogWr(packet, client);
 			NetworkStream networkStream = client.GetStream();
 			var byte_packet = Packet.ToByteArray(packet, cipherAES);
 			networkStream.Write(byte_packet, 0, byte_packet.Length);
+		}
+		private static void LogWr(Packet packet, TcpClient client)
+		{
+			if (!LogPing && packet.TypePacket == TypePacket.Ping) return;
+			Log.WriteLine($"[{client.Client.LocalEndPoint} > {client.Client.RemoteEndPoint}] {packet.TypePacket} {packet.UID}");
 		}
 	}
 	

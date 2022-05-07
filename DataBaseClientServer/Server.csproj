@@ -38,9 +38,6 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ExplorerDialog">
-      <HintPath>..\..\..\cs\Lib\ExplorerDialog.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -109,6 +106,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\cs\ExplorerDialog\ExplorerDialog\ExplorerDialog.csproj">
+      <Project>{74b750f0-692a-4fe2-80ee-30f8c17fc498}</Project>
+      <Name>ExplorerDialog</Name>
+    </ProjectReference>
     <ProjectReference Include="..\API\API.csproj">
       <Project>{2abc7fdb-493d-47ee-a19e-39d55fdd7c57}</Project>
       <Name>API</Name>

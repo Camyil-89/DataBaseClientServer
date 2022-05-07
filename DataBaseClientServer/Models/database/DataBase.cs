@@ -15,11 +15,27 @@ namespace DataBaseClientServer.Models.database
 		public string Provider = "Provider=Microsoft.Jet.OLEDB.4.0";
 		private OleDbConnection myConnection;
 
-		public void Connect()
+		public bool Connect()
 		{
-			myConnection = new OleDbConnection($"{Provider};Data Source={Path};");
-			myConnection.Open();
-			Log.WriteLine($"Connect database {Provider};Data Source={Path};");
+			try
+			{
+				myConnection = new OleDbConnection($"{Provider};Data Source={Path};");
+				myConnection.Open();
+				Log.WriteLine($"Connect database {Provider};Data Source={Path};");
+				return true;
+			} catch (Exception e) { Log.WriteLine($"Error connect database: {e}"); return false; }
+			
+		}
+		public List<string> GetTables()
+		{
+			List<string> DtataBaseNames = new List<string>();
+			DataTable dT = myConnection.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
+			foreach (DataRow row in dT.Rows)
+			{
+				string tbName = row[2].ToString();
+				if (!tbName.Contains("MSys")) DtataBaseNames.Add(tbName);
+			}
+			return DtataBaseNames;
 		}
 		public void SendQuery(string query)
 		{

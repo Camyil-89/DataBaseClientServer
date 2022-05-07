@@ -163,6 +163,7 @@ namespace DataBaseClientServer.ViewModels
 			StopServerListenerCommand = new LambdaCommand(OnStopServerListenerCommand, CanStopServerListenerCommand);
 			AddUserCommand = new LambdaCommand(OnAddUserCommand, CanAddUserCommand);
 			AddDataBasePathCommand = new LambdaCommand(OnAddDataBasePathCommand, CanAddDataBasePathCommand);
+			RemoveDataBasePathCommand = new LambdaCommand(OnRemoveDataBasePathCommand, CanRemoveDataBasePathCommand);
 			#endregion
 			Server.ServerViewModel = this;
 			ProviderXML.IV_AES = IV_LOAD;
@@ -213,7 +214,17 @@ namespace DataBaseClientServer.ViewModels
 			catch (Exception ex) { Settings.Clients = new ObservableCollection<Client>(); Log.WriteLine(ex); }
 			if (Settings.ServerSettings.AutoStartServer) Task.Run(() => { StartServer(); });
 			Log.WriteLine("LoadXML: true");
-			foreach (var i in Settings.ServerSettings.PathsToDataBase) PathsToDataBase.Add(new DataBaseConnectPath() { Path = i, IsEnable = File.Exists(i) });
+			Task.Run(() => {
+				foreach (var i in Settings.ServerSettings.PathsToDataBase)
+				{
+					var x = new DataBaseConnectPath() { Path = i };
+					if (File.Exists(i)) x.IsEnableStatus = StatusConnectDataBase.CanConnect;
+					else x.IsEnableStatus = 0;
+					PathsToDataBase.Add(x);
+					if (x.DataBase.Connect()) x.IsEnableStatus = StatusConnectDataBase.ConnectAccess;
+					else x.IsEnableStatus = StatusConnectDataBase.NotWork;
+				}
+			});
 			//Settings.ServerSettings.PathsToDataBase.Add(new DataBaseConnectPath() { Path = "test", IsEnable = false });
 			//Settings.ServerSettings.PathsToDataBase.Add(new DataBaseConnectPath() { Path = "test.txt", IsEnable = true });
 			//Settings.Clients.Add(new Client() { AccessLevel = API.AccessLevel.Admin, Name = "test2", Password = "123", UID = Client.GenerateUIDClient(Settings.Clients)});
@@ -243,6 +254,14 @@ namespace DataBaseClientServer.ViewModels
 
 
 		#region Commands
+		#region RemoveDataBasePathCommand
+		public ICommand RemoveDataBasePathCommand { get; set; }
+		public bool CanRemoveDataBasePathCommand(object e) => true;
+		public void OnRemoveDataBasePathCommand(object e)
+		{
+			if (SelectPathDataBase != null) PathsToDataBase.Remove(SelectPathDataBase);
+		}
+		#endregion
 		#region AddDataBasePath
 		public ICommand AddDataBasePathCommand { get; set; }
 		public bool CanAddDataBasePathCommand(object e) => true;
@@ -252,9 +271,10 @@ namespace DataBaseClientServer.ViewModels
 			if (list_paths.Length == 0) return;
 			foreach (var path in list_paths)
 			{
+				if (path.Split('.').Last() != "mdb") continue;
 				var find = PathsToDataBase.FirstOrDefault((i) => i.Path == path);
 				if (find != null) continue;
-				PathsToDataBase.Add(new DataBaseConnectPath() { Path = path, IsEnable = true });
+				PathsToDataBase.Add(new DataBaseConnectPath() { Path = path, IsEnableStatus = StatusConnectDataBase.CanConnect });
 			}
 		}
 		#endregion
@@ -385,26 +405,62 @@ namespace DataBaseClientServer.ViewModels
 		///  Получение ответа от клиента
 		/// </summary>
 		/// <param name="Packet"></param>
-		private void Answer(API.Packet Packet)
+		private void Answer(API.Packet Packet, TcpClient client, API.CipherAES cipherAES)
 		{
+			Console.WriteLine(Packet);
+			switch (Packet.TypePacket)
+			{
+				case TypePacket.GetPathsDataBase:
+					List<string> paths = new List<string>();
+					foreach (var i in PathsToDataBase) paths.Add(i.Path);
+					Packet.Data = paths;
+					API.Base.SendPacketClient(client, Packet, cipherAES);
+					Console.WriteLine("2312312312");
+					break;
+			}
 			Log.WriteLine(Packet);
 		}
 	}
-
+	public enum StatusConnectDataBase: int
+	{
+		CanConnect = 3,
+		ConnectAccess = 1,
+		NotWork = 0,
+		FileIsBusy = 2,
+	}
 	public class DataBaseConnectPath : Base.ViewModel.BaseViewModel
 	{
 		private string _Path;
-		public string Path { get => _Path; set => Set(ref _Path, value); }
-
-		private bool _IsEnable;
-		public bool IsEnable
-		{
-			get => _IsEnable; set
+		public string Path { get => _Path; 
+			set
 			{
-				Set(ref _IsEnable, value);
-				if (IsEnable) Foreground = Brushes.Green;
-				else Foreground = Brushes.Red;
+				Set(ref _Path, value);
+				DataBase.Path = Path;
+			} }
 
+		public DataBase DataBase { get; set; } = new DataBase();
+
+		private StatusConnectDataBase _IsEnableStatus;
+		public StatusConnectDataBase IsEnableStatus
+		{
+			get => _IsEnableStatus; set
+			{
+				Set(ref _IsEnableStatus, value);
+				switch (IsEnableStatus)
+				{
+					case StatusConnectDataBase.CanConnect:
+						Foreground = Brushes.YellowGreen;
+						break;
+					case StatusConnectDataBase.ConnectAccess:
+						Foreground = Brushes.Green;
+						break;
+					case StatusConnectDataBase.NotWork:
+						Foreground = Brushes.Red;
+						break;
+					case StatusConnectDataBase.FileIsBusy:
+						Foreground = Brushes.Orange;
+						break;
+				}
 			}
 		}
 
