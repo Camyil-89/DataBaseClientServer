@@ -72,7 +72,15 @@ namespace DataBaseClientServer.ViewModels
 		private int _PingToServer = -1;
 		public int PingToServer { get => _PingToServer; set => Set(ref _PingToServer, value); }
 		#endregion
+		#region база данных
+		private bool _IsConnectDataBase = false;
+		public bool IsConnectDataBase { get => _IsConnectDataBase; set => Set(ref _IsConnectDataBase, value); }
 
+		private API.LibraryDataBase _LibraryDataBase = null;
+		public API.LibraryDataBase LibraryDataBase { get => _LibraryDataBase; set => Set(ref _LibraryDataBase, value); }
+		private DataTable _Books = null;
+		public DataTable Books { get => _Books; set => Set(ref _Books, value); }
+		#endregion
 		#region Kernel
 		public ClientViewModel()
 		{
@@ -177,27 +185,22 @@ namespace DataBaseClientServer.ViewModels
 					var packet = (API.DataBasePacket)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.ConnectDataBase, Data = dataBasePacket }, 1).Packets[0].Data;
 					if (packet.Info == API.InfoDataBasePacket.OK)
 					{
-						Console.WriteLine($"{string.Join(";", packet.Data)}");
-						dataBasePacket.Data = packet.Data[0];
-						DataTable data_table = (DataTable)((API.DataBasePacket)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.AllocTable, Data = dataBasePacket }, 1).Packets[0].Data).Data;
-						foreach (DataRow j in data_table.Rows)
-						{
-							Console.WriteLine($"{string.Join(";", j.ItemArray)}");
-						}
-						foreach (DataColumn i in data_table.Columns)
-						{
-							Console.WriteLine(i.ColumnName);
-						}
-						DataRow dataRow = data_table.NewRow();
-						dataRow[data_table.Columns[1]] = "test";
-						dataRow[data_table.Columns[2]] = "123";
-						data_table.Rows.Add(dataRow);
-						foreach (DataRow j in data_table.Rows)
-						{
-							Console.WriteLine($"{string.Join(";", j.ItemArray)}");
-						}
+						LibraryDataBase = (API.LibraryDataBase)packet.Data;
+						IsConnectDataBase = true;
 					}
-
+					else
+					{
+						switch (packet.Info)
+						{
+							case API.InfoDataBasePacket.NotExistsFile:
+								MessageBox.Show("База данных в данных момент не доступна!", "Уведомление");
+								break;
+							default:
+								MessageBox.Show($"Не удалось получить доступ к базе данных!\n{packet.Info}", "Уведомление");
+								break;
+						}
+						IsConnectDataBase = false;
+					}
 				}
 				catch (Exception ex){ Console.WriteLine(ex); }
 				BlockAllWorkInDataBase = false;
@@ -293,6 +296,7 @@ namespace DataBaseClientServer.ViewModels
 					}
 					else
 					{
+						Thread.Sleep(1000);
 						Task.Run(() => { PingServer(); });
 						foreach (var i in (List<string>)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.GetPathsDataBase }, 1).Packets[0].Data)
 						{

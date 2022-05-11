@@ -410,7 +410,12 @@ namespace DataBaseClientServer.ViewModels
 				dataBasePacket.Info = InfoDataBasePacket.NotExistsFile;
 				return dataBasePacket;
 			}
-			dataBasePacket.Type = TypeDataBasePacket.GetTable;
+			if (dt.IsEnableStatus != StatusConnectDataBase.ConnectAccess)
+			{
+				dataBasePacket.Info = InfoDataBasePacket.IsNotWork;
+				return dataBasePacket;
+			}
+			dataBasePacket.Type = TypeDataBasePacket.GetTables;
 			dataBasePacket.Data = dt.DataBase.SendQuery($"SELECT * FROM {dataBasePacket.Data}");
 			Console.WriteLine(dataBasePacket.Data);
 			return dataBasePacket;
@@ -423,8 +428,13 @@ namespace DataBaseClientServer.ViewModels
 				dataBasePacket.Info = InfoDataBasePacket.NotExistsFile;
 				return dataBasePacket;
 			}
-			dataBasePacket.Data = dt.DataBase.GetTables();
-			dataBasePacket.Type = API.TypeDataBasePacket.GetTableNames;
+			if (dt.IsEnableStatus != StatusConnectDataBase.ConnectAccess)
+			{
+				dataBasePacket.Info = InfoDataBasePacket.IsNotWork;
+				return dataBasePacket;
+			}
+			dataBasePacket.Data = dt.DataBase.GetTablesDT();
+			dataBasePacket.Type = API.TypeDataBasePacket.GetTables;
 			return dataBasePacket;
 		}
 		/// <summary>
@@ -452,8 +462,8 @@ namespace DataBaseClientServer.ViewModels
 				case TypePacket.AllocTable:
 					try
 					{
-						Packet.Data = CreateDataBasePacketDataTable((API.DataBasePacket)Packet.Data);
-						API.Base.SendPacketClient(client, Packet, cipherAES);
+						//Packet.Data = CreateDataBasePacketDataTable((API.DataBasePacket)Packet.Data);
+						//API.Base.SendPacketClient(client, Packet, cipherAES);
 					}
 					catch (Exception ex) { Console.WriteLine(ex); }
 					break;

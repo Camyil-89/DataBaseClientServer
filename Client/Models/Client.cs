@@ -34,9 +34,14 @@ namespace DataBaseClientServer.Models
 		{ get => _StatusClient;
 			set 
 			{ 
-				Set(ref _StatusClient, value); 
+				Set(ref _StatusClient, value);
 				if (value == StatusClient.Connecting) VisibilityConnecting = Visibility.Visible;
-				else VisibilityConnecting = Visibility.Collapsed;
+				else
+				{
+					VisibilityConnecting = Visibility.Collapsed;
+					IsConnected = false;
+				}
+				if (value == StatusClient.Connected) IsConnected = true;
 			} 
 		}
 		#region Connecting
@@ -44,6 +49,10 @@ namespace DataBaseClientServer.Models
 		public Visibility VisibilityConnecting { get => _VisibilityConnecting; set => Set(ref _VisibilityConnecting, value); }
 
 		#endregion
+
+		private bool _IsConnected = false;
+		public bool IsConnected { get => _IsConnected; set => Set(ref _IsConnected, value); }
+
 		private bool _IsAuthorization = false;
 		public bool IsAuthorization { get => _IsAuthorization; set => Set(ref _IsAuthorization, value); }
 		private DateTime LastAnswer;
