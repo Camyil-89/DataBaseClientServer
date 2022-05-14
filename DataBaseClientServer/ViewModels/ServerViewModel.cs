@@ -212,18 +212,22 @@ namespace DataBaseClientServer.ViewModels
 				}
 			}
 			catch (Exception ex) { Settings.Clients = new ObservableCollection<Client>(); Log.WriteLine(ex); }
-			if (Settings.ServerSettings.AutoStartServer) Task.Run(() => { StartServer(); });
 			Log.WriteLine("LoadXML: true");
 			Task.Run(() => {
-				foreach (var i in Settings.ServerSettings.PathsToDataBase)
+				try
 				{
-					var x = new DataBaseConnectPath() { Path = i };
-					if (File.Exists(i)) x.IsEnableStatus = StatusConnectDataBase.CanConnect;
-					else x.IsEnableStatus = 0;
-					PathsToDataBase.Add(x);
-					if (x.DataBase.Connect()) x.IsEnableStatus = StatusConnectDataBase.ConnectAccess;
-					else x.IsEnableStatus = StatusConnectDataBase.NotWork;
-				}
+					foreach (var i in Settings.ServerSettings.PathsToDataBase)
+					{
+						var x = new DataBaseConnectPath() { Path = i };
+						if (File.Exists(i)) x.IsEnableStatus = StatusConnectDataBase.CanConnect;
+						else x.IsEnableStatus = 0;
+						PathsToDataBase.Add(x);
+						if (x.DataBase.Connect()) x.IsEnableStatus = StatusConnectDataBase.ConnectAccess;
+						else x.IsEnableStatus = StatusConnectDataBase.NotWork;
+					}
+				} catch { }
+				
+				if (Settings.ServerSettings.AutoStartServer) Task.Run(() => { StartServer(); });
 			});
 			//Settings.ServerSettings.PathsToDataBase.Add(new DataBaseConnectPath() { Path = "test", IsEnable = false });
 			//Settings.ServerSettings.PathsToDataBase.Add(new DataBaseConnectPath() { Path = "test.txt", IsEnable = true });
@@ -267,7 +271,12 @@ namespace DataBaseClientServer.ViewModels
 		public bool CanAddDataBasePathCommand(object e) => true;
 		public void OnAddDataBasePathCommand(object e)
 		{
-			var list_paths = ExplorerDialog.FilePicker.ShowDialog(true, ";").Split(';');
+			if (PathsToDataBase.Count > 0)
+			{
+				MessageBox.Show($"Сначала удалите базу данных текущею!\n{PathsToDataBase[0].Path}", "Уведомление");
+				return;
+			}
+			var list_paths = ExplorerDialog.FilePicker.ShowDialog(false, ";").Split(';');
 			if (list_paths.Length == 0) return;
 			foreach (var path in list_paths)
 			{
@@ -422,18 +431,17 @@ namespace DataBaseClientServer.ViewModels
 		}
 		private DataBasePacket CreateDataBasePacketTables(DataBasePacket dataBasePacket)
 		{
-			var dt = PathsToDataBase.FirstOrDefault((i) => i.Path == dataBasePacket.Path);
-			if (dt == null)
+			if (PathsToDataBase.Count == 0)
 			{
 				dataBasePacket.Info = InfoDataBasePacket.NotExistsFile;
 				return dataBasePacket;
 			}
-			if (dt.IsEnableStatus != StatusConnectDataBase.ConnectAccess)
+			if (PathsToDataBase[0].IsEnableStatus != StatusConnectDataBase.ConnectAccess)
 			{
 				dataBasePacket.Info = InfoDataBasePacket.IsNotWork;
 				return dataBasePacket;
 			}
-			dataBasePacket.Data = dt.DataBase.GetTablesDT();
+			dataBasePacket.Data = PathsToDataBase[0].DataBase.GetTablesDT();
 			dataBasePacket.Type = API.TypeDataBasePacket.GetTables;
 			return dataBasePacket;
 		}
@@ -454,7 +462,7 @@ namespace DataBaseClientServer.ViewModels
 				case TypePacket.ConnectDataBase:
 					try
 					{
-						Packet.Data = CreateDataBasePacketTables((API.DataBasePacket)Packet.Data);
+						Packet.Data = CreateDataBasePacketTables(new DataBasePacket());
 						API.Base.SendPacketClient(client, Packet, cipherAES);
 					}
 					catch (Exception ex) { Console.WriteLine(ex); }

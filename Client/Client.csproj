@@ -60,7 +60,11 @@
     </ApplicationDefinition>
     <Compile Include="Models\Client.cs" />
     <Compile Include="Models\Settings\ClientSerttings.cs" />
+    <Compile Include="ViewModels\AddToDataBaseVM.cs" />
     <Compile Include="ViewModels\ClientViewModel.cs" />
+    <Compile Include="Views\Windows\AddToDataBaseWindow.xaml.cs">
+      <DependentUpon>AddToDataBaseWindow.xaml</DependentUpon>
+    </Compile>
     <Page Include="ClientWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -76,6 +80,10 @@
       <DependentUpon>ClientWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\Windows\AddToDataBaseWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">
@@ -108,6 +116,9 @@
       <Project>{2abc7fdb-493d-47ee-a19e-39d55fdd7c57}</Project>
       <Name>API</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Views\Pages\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

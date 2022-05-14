@@ -13,15 +13,17 @@ using DataBaseClientServer.Models;
 using DataBaseClientServer.Models.Settings;
 using System.IO;
 using Client;
+using Client.Views.Windows;
 using System.Windows;
 using System.Threading;
 using System.Collections.ObjectModel;
 using System.Windows.Data;
 using System.Data;
+using System.ComponentModel;
 
 namespace DataBaseClientServer.ViewModels
 {
-	class ClientViewModel : Base.ViewModel.BaseViewModel
+	public class ClientViewModel : Base.ViewModel.BaseViewModel
 	{
 		private static object _lock = new object();
 		private ClientSerttings _ClientSerttings = new ClientSerttings();
@@ -76,14 +78,25 @@ namespace DataBaseClientServer.ViewModels
 		private bool _IsConnectDataBase = false;
 		public bool IsConnectDataBase { get => _IsConnectDataBase; set => Set(ref _IsConnectDataBase, value); }
 
-		private API.LibraryDataBase _LibraryDataBase = null;
-		public API.LibraryDataBase LibraryDataBase { get => _LibraryDataBase; set => Set(ref _LibraryDataBase, value); }
+		private ObservableCollection<API.TableDataBase> _TablesDataBase = new ObservableCollection<API.TableDataBase>();
+		public ObservableCollection<API.TableDataBase> TablesDataBase { get => _TablesDataBase; set => Set(ref _TablesDataBase, value); }
+
+		private API.TableDataBase _SelectedTableDataBase;
+		public API.TableDataBase SelectedTableDataBase { get => _SelectedTableDataBase; set => Set(ref _SelectedTableDataBase, value); }
+
 		private DataTable _Books = null;
 		public DataTable Books { get => _Books; set => Set(ref _Books, value); }
+
+
+		public AddToDataBaseVM AddToDataBaseVM;
+
+		private bool PingWork = false;
+		private bool PingStop = false;
 		#endregion
 		#region Kernel
 		public ClientViewModel()
 		{
+			AddToDataBaseVM = new AddToDataBaseVM(this);
 			BindingOperations.EnableCollectionSynchronization(PathsToDataBase, _lock); // доступ из всех потоков
 			ProviderXML.IV_AES = IV_LOAD;
 			ProviderXML.KEY_AES = KEY_LOAD;
@@ -92,11 +105,20 @@ namespace DataBaseClientServer.ViewModels
 			AuthorizationServerCommand = new LambdaCommand(OnAuthorizationServerCommand, CanAuthorizationServerCommand);
 			DisconnectServerCommand = new LambdaCommand(OnDisconnectServerCommand, CanDisconnectServerCommand);
 			ConnectDataBaseCommand = new LambdaCommand(OnConnectDataBaseCommand, CanConnectDataBaseCommand);
+			AddDBBookCommand = new LambdaCommand(OnAddDBBookCommand, CanAddDBBookCommand);
 			SetSettingsClient();
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
 			Task.Run(() => { LoadXML(); });
 			Task.Run(() => { InfoConnectTextUpdate(); });
+
+			if ((bool)(DesignerProperties.IsInDesignModeProperty.GetMetadata(typeof(DependencyObject)).DefaultValue))
+			{
+				for (int i = 0; i < 10; i++)
+				{
+					TablesDataBase.Add(new API.TableDataBase() { Table = new DataTable() { TableName = $"{i}" } });
+				}
+			}
 		}
 		private void SetSettingsClient()
 		{
@@ -167,44 +189,63 @@ namespace DataBaseClientServer.ViewModels
 		#endregion
 
 		#region Commands
+		#region AddDBBookCommand
+		public ICommand AddDBBookCommand { get; set; }
+		public bool CanAddDBBookCommand(object e) => true;
+		public void OnAddDBBookCommand(object e)
+		{
+			OpenAddDBWindow(AddType.AddBook);
+		}
+		#endregion
+		public void OpenAddDBWindow(AddType type)
+		{
+			AddToDataBaseWindow window = new AddToDataBaseWindow();
+			window.DataContext = AddToDataBaseVM;
+			AddToDataBaseVM.AddDBType = type;
+			AddToDataBaseVM.Window = window;
+			window.ShowInTaskbar = false;
+			window.ShowDialog();
+		}
 		#region ConnectDataBaseCommand
 		public ICommand ConnectDataBaseCommand { get; set; }
 		public bool CanConnectDataBaseCommand(object e) => Client != null && 
 			Client.StatusClient == StatusClient.Connected &&
 			Client.IsAuthorization &&
-			SelectPathToDataBase != null &&
 			!BlockAllWorkInDataBase;
 		public void OnConnectDataBaseCommand(object e)
 		{
-			BlockAllWorkInDataBase = true;
 			Task.Run(() => {
-				try
-				{
-					API.DataBasePacket dataBasePacket = new API.DataBasePacket();
-					dataBasePacket.Path = SelectPathToDataBase;
-					var packet = (API.DataBasePacket)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.ConnectDataBase, Data = dataBasePacket }, 1).Packets[0].Data;
-					if (packet.Info == API.InfoDataBasePacket.OK)
-					{
-						LibraryDataBase = (API.LibraryDataBase)packet.Data;
-						IsConnectDataBase = true;
-					}
-					else
-					{
-						switch (packet.Info)
-						{
-							case API.InfoDataBasePacket.NotExistsFile:
-								MessageBox.Show("База данных в данных момент не доступна!", "Уведомление");
-								break;
-							default:
-								MessageBox.Show($"Не удалось получить доступ к базе данных!\n{packet.Info}", "Уведомление");
-								break;
-						}
-						IsConnectDataBase = false;
-					}
-				}
-				catch (Exception ex){ Console.WriteLine(ex); }
-				BlockAllWorkInDataBase = false;
+				ConnectDataBase();
 			});
+		}
+		public void ConnectDataBase()
+		{
+			BlockAllWorkInDataBase = true;
+			IsConnectDataBase = false;
+			try
+			{
+				var packet = (API.DataBasePacket)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.ConnectDataBase }, 1).Packets[0].Data;
+				if (packet.Info == API.InfoDataBasePacket.OK)
+				{
+					TablesDataBase = (ObservableCollection<API.TableDataBase>)packet.Data;
+					IsConnectDataBase = true;
+				}
+				else
+				{
+					switch (packet.Info)
+					{
+						case API.InfoDataBasePacket.NotExistsFile:
+							MessageBox.Show("База данных в данных момент не доступна!", "Уведомление");
+							break;
+						default:
+							MessageBox.Show($"Не удалось получить доступ к базе данных!\n{packet.Info}", "Уведомление");
+							break;
+					}
+					IsConnectDataBase = false;
+				}
+			}
+			catch (Exception ex) { Console.WriteLine(ex); }
+			BlockAllWorkInDataBase = false;
 		}
 		#endregion
 		#region AuthorizationServerCommand
@@ -253,7 +294,8 @@ namespace DataBaseClientServer.ViewModels
 		}
 		private void PingServer()
 		{
-			while (Client != null && Client.StatusClient == StatusClient.Connected)
+			PingWork = true;
+			while (Client != null && Client.StatusClient == StatusClient.Connected && !PingStop)
 			{
 				try
 				{
@@ -267,6 +309,7 @@ namespace DataBaseClientServer.ViewModels
 				catch { }
 				Thread.Sleep(1000);
 			}
+			PingWork = false;
 			Log.WriteLine("PingServer: Dispose");
 		}
 		private void DisconnectClient()
@@ -296,12 +339,21 @@ namespace DataBaseClientServer.ViewModels
 					}
 					else
 					{
-						Thread.Sleep(1000);
-						Task.Run(() => { PingServer(); });
-						foreach (var i in (List<string>)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.GetPathsDataBase }, 1).Packets[0].Data)
-						{
-							PathsToDataBase.Add(i);
-						}
+						//Thread.Sleep(1000);
+						Task.Run(() => { 
+							while (PingWork)
+							{
+								PingStop = true;
+								Thread.Sleep(1);
+							}
+							PingStop = false;
+							PingServer();
+						});
+						ConnectDataBase();
+						//foreach (var i in (List<string>)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.GetPathsDataBase }, 1).Packets[0].Data)
+						//{
+						//	PathsToDataBase.Add(i);
+						//}
 
 					}
 				}

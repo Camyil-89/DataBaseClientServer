@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.IO;
@@ -30,6 +31,11 @@ namespace API
 	#endregion
 
 	#region база данных
+	public enum TypeStatusTable : int
+	{
+		Read = 1,
+		WriteAndRead = 2,
+	}
 	public enum TypeDataBasePacket : int
 	{
 		GetTables = 1,
@@ -61,11 +67,10 @@ namespace API
 		SQLQuery = 11,
 		AllocTable = 12,
 	}
-
 	[Serializable]
-	public class LibraryDataBase
+	public class TableDataBase
 	{
-		#region BaseClass
+		#region Base
 		public event PropertyChangedEventHandler PropertyChanged;
 
 		protected virtual void OnPropertyChanged([CallerMemberName] string PropertyName = null)
@@ -93,101 +98,10 @@ namespace API
 		}
 		#endregion
 
-		/// <summary>
-		/// Абонементы
-		/// </summary>
-		private DataTable _Subscriptions;
-		public DataTable Subscriptions { get => _Subscriptions; set => Set(ref _Subscriptions, value); }
-		/// <summary>
-		/// Авторы
-		/// </summary>
-		private DataTable _Authors;
-		public DataTable Authors { get => _Authors; set => Set(ref _Authors, value); }
-		/// <summary>
-		/// Библиотеки
-		/// </summary>
-		private DataTable _Libraries;
-		public DataTable Libraries { get => _Libraries; set => Set(ref _Libraries, value); }
-		/// <summary>
-		/// Хранилище книг
-		/// </summary>
-		private DataTable _BookStorage;
-		public DataTable BookStorage { get => _BookStorage; set => Set(ref _BookStorage, value); }
-		/// <summary>
-		/// Выданные книги
-		/// </summary>
-		private DataTable _IssuedBooks;
-		public DataTable IssuedBooks { get => _IssuedBooks; set => Set(ref _IssuedBooks, value); }
-		/// <summary>
-		/// Должности
-		/// </summary>
-		private DataTable _Positions;
-		public DataTable Positions { get => _Positions; set => Set(ref _Positions, value); }
-		/// <summary>
-		///  Жанр авторов
-		/// </summary>
-		private DataTable _GenreAuthors;
-		public DataTable GenreAuthors { get => _GenreAuthors; set => Set(ref _GenreAuthors, value); }
-		/// <summary>
-		///  жанр книг
-		/// </summary>
-		private DataTable _BookGenre;
-		public DataTable BookGenre { get => _BookGenre; set => Set(ref _BookGenre, value); }
-		/// <summary>
-		///  Зарегистрированные читатели
-		/// </summary>
-		private DataTable _RegisteredReaders;
-		public DataTable RegisteredReaders { get => _RegisteredReaders; set => Set(ref _RegisteredReaders, value); }
-		/// <summary>
-		///  Категория читателей
-		/// </summary>
-		private DataTable _CategoryReaders;
-		public DataTable CategoryReaders { get => _CategoryReaders; set => Set(ref _CategoryReaders, value); }
-		/// <summary>
-		///  Книги
-		/// </summary>
-		private DataTable _Books;
-		public DataTable Books { get => _Books; set => Set(ref _Books, value); }
-		/// <summary>
-		///  обслуженные читатели
-		/// </summary>
-		private DataTable _ServedReaders;
-		public DataTable ServedReaders { get => _ServedReaders; set => Set(ref _ServedReaders, value); }
-		/// <summary>
-		///  Обязанности
-		/// </summary>
-		private DataTable _Responsibilities;
-		public DataTable Responsibilities { get => _Responsibilities; set => Set(ref _Responsibilities, value); }
-		/// <summary>
-		///  Полка
-		/// </summary>
-		private DataTable _Shelf;
-		public DataTable Shelf { get => _Shelf; set => Set(ref _Shelf, value); }
-		/// <summary>
-		///  Работники
-		/// </summary>
-		private DataTable _Employees;
-		public DataTable Employees { get => _Employees; set => Set(ref _Employees, value); }
-		/// <summary>
-		///  Стелаж
-		/// </summary>
-		private DataTable _Shelving;
-		public DataTable Shelving { get => _Shelving; set => Set(ref _Shelving, value); }
-		/// <summary>
-		///  Тип книги
-		/// </summary>
-		private DataTable _BookType;
-		public DataTable BookType { get => _BookType; set => Set(ref _BookType, value); }
-		/// <summary>
-		///  Читатели
-		/// </summary>
-		private DataTable _Readers;
-		public DataTable Readers { get => _Readers; set => Set(ref _Readers, value); }
-		/// <summary>
-		///  Читательский зал
-		/// </summary>
-		private DataTable _ReadingRoom;
-		public DataTable ReadingRoom { get => _ReadingRoom; set => Set(ref _ReadingRoom, value); }
+		private TypeStatusTable _Status = TypeStatusTable.Read;
+		public TypeStatusTable Status { get => _Status; set => Set(ref _Status, value); }
+		private DataTable _Table;
+		public DataTable Table { get => _Table; set => Set(ref _Table, value); }
 	}
 
 	[Serializable]

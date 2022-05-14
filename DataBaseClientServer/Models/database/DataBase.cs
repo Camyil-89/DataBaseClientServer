@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.OleDb;
 using System.Linq;
@@ -26,9 +27,9 @@ namespace DataBaseClientServer.Models.database
 			} catch (Exception e) { Log.WriteLine($"Error connect database: {e}"); return false; }
 			
 		}
-		public API.LibraryDataBase GetTablesDT()
+		public ObservableCollection<API.TableDataBase> GetTablesDT()
 		{
-			API.LibraryDataBase LDB = new API.LibraryDataBase();
+			ObservableCollection<API.TableDataBase> tablesDataBase = new ObservableCollection<API.TableDataBase>();
 			DataTable dT = myConnection.GetOleDbSchemaTable(OleDbSchemaGuid.Tables, null);
 			foreach (DataRow row in dT.Rows)
 			{
@@ -37,28 +38,10 @@ namespace DataBaseClientServer.Models.database
 				{
 					var dt = SendQuery($"SELECT * FROM [{tbName}]");
 					dt.TableName = tbName;
-					if (tbName == "Хранилище книг") LDB.BookStorage = dt;
-					else if (tbName == "Библиотеки") LDB.Libraries = dt;
-					else if (tbName == "Авторы") LDB.Authors = dt;
-					else if (tbName == "Абонементы") LDB.Subscriptions = dt;
-					else if (tbName == "Выданные книги") LDB.IssuedBooks = dt;
-					else if (tbName == "Должности") LDB.Positions = dt;
-					else if (tbName == "Жанр авторов") LDB.GenreAuthors = dt;
-					else if (tbName == "жанр книг") LDB.BookGenre = dt;
-					else if (tbName == "Зарегистрированные читатели") LDB.RegisteredReaders = dt;
-					else if (tbName == "Категория читателей") LDB.CategoryReaders = dt;
-					else if (tbName == "Книги") LDB.Books = dt;
-					else if (tbName == "обслуженные читатели") LDB.ServedReaders = dt;
-					else if (tbName == "Обязанности") LDB.Responsibilities = dt;
-					else if (tbName == "Полка") LDB.Shelf = dt;
-					else if (tbName == "Работники") LDB.Employees = dt;
-					else if (tbName == "Стелаж") LDB.Shelving = dt;
-					else if (tbName == "Тип книги") LDB.BookType = dt;
-					else if (tbName == "Читатели") LDB.Readers = dt;
-					else if (tbName == "Читательский зал") LDB.ReadingRoom = dt;
+					tablesDataBase.Add(new API.TableDataBase() { Table = dt});
 				}
 			}
-			return LDB;
+			return tablesDataBase;
 		}
 		public List<string> GetTables()
 		{

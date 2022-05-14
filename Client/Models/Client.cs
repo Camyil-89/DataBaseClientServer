@@ -13,17 +13,21 @@ using API.Logging;
 
 namespace DataBaseClientServer.Models
 {
-	enum StatusClient: int
+	public enum StatusClient: int
 	{
 		Connected = 1,
 		Disconnected = 2,
 		Connecting = 3,
 	}
-	internal class Client: Base.ViewModel.BaseViewModel
+	public enum AddType : int
+	{
+		AddBook = 1,
+	}
+	public class Client: Base.ViewModel.BaseViewModel
 	{
 		
 		private TcpClient _Client { get; set; } = new TcpClient();
-		public int TimeOutUpdateKeyAES { get; set; } = 10000; // msc
+		public int TimeOutUpdateKeyAES { get; set; } = 30000; // msc
 		public int TimeOut { get; set; } = 5000; // msc	
 		public int TimeOutConnect { get; set; } = 5000; // msc	
 		public int SizeBuffer { get; set; } = 2048;

@@ -6,13 +6,18 @@
         xmlns:local="clr-namespace:Client"
 		xmlns:vm="clr-namespace:DataBaseClientServer.ViewModels"
         mc:Ignorable="d"
-        Title="Client"
+        Title="Городская библиотека"
         Height="500"
-        Width="600"
+        Width="800"
         WindowStartupLocation="CenterScreen">
 	<Window.DataContext>
 		<vm:ClientViewModel/>
 	</Window.DataContext>
+	<Window.Resources>
+		<Style TargetType="{x:Type MenuItem}">
+			<Setter Property="FontSize" Value="14"/>
+		</Style>
+	</Window.Resources>
 	<DockPanel>
 		<StatusBar DockPanel.Dock="Bottom">
 			<StatusBarItem Visibility="{Binding Client.VisibilityConnecting}">
@@ -38,81 +43,38 @@
 		<TabControl>
 			<TabItem Header="База данных">
 				<DockPanel IsEnabled="{Binding Client.IsConnected}">
-					<StatusBar DockPanel.Dock="Top" Height="30">
-						<Separator/>
-						<StatusBarItem>
-							<StackPanel Orientation="Horizontal">
-								<Button Content="Подключить" Width="100" Margin="0 0 5 0" Command="{Binding ConnectDataBaseCommand}"/>
-								<ComboBox Width="100" ItemsSource="{Binding PathsToDataBase}" SelectedItem="{Binding SelectPathToDataBase}">
-									<ComboBox.ToolTip>
-										<ToolTip>
-											<TextBlock Text="Выберите базу данных."/>
-										</ToolTip>
-									</ComboBox.ToolTip>
-								</ComboBox>
-							</StackPanel>
-						</StatusBarItem>
-					</StatusBar>
 					<DockPanel IsEnabled="{Binding IsConnectDataBase}">
-						<TabControl>
-							<TabItem Header="Хранилище книг">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.BookStorage}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Библиотеки">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Libraries}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Авторы">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Authors}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Абонементы">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Subscriptions}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Выданные книги">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.IssuedBooks}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Должности">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Positions}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Жанр авторов">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.GenreAuthors}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="жанр книг">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.BookGenre}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Зарегистрированные читатели">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.RegisteredReaders}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Категория читателей">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.CategoryReaders}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Книги">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Books}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="обслуженные читатели">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.ServedReaders}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Обязанности">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Responsibilities}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Полки">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Shelf}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Работники">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Employees}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Стелажи">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Shelving}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Типы книг">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.BookType}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Читатели">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.Readers}" IsReadOnly="True"/>
-							</TabItem>
-							<TabItem Header="Читательский зал">
-								<DataGrid ItemsSource="{Binding LibraryDataBase.ReadingRoom}" IsReadOnly="True"/>
-							</TabItem>
-						</TabControl>
+						<Grid>
+							<Grid.ColumnDefinitions>
+								<ColumnDefinition Width="300"/>
+								<ColumnDefinition/>
+							</Grid.ColumnDefinitions>
+							<ListView Grid.Column="0" ItemsSource="{Binding TablesDataBase}" SelectedItem="{Binding SelectedTableDataBase}">
+								<ListView.ItemTemplate>
+									<DataTemplate>
+										<Grid>
+											<Grid.ColumnDefinitions>
+												<ColumnDefinition Width="225"/>
+												<ColumnDefinition/>
+											</Grid.ColumnDefinitions>
+											<TextBlock Grid.Column="0" Text="{Binding Table.TableName}" Margin="0 0 5 0" FontSize="14" HorizontalAlignment="Left"/>
+											<TextBlock Grid.Column="1" Text="{Binding Status}" FontSize="14" HorizontalAlignment="Right"/>
+										</Grid>
+									</DataTemplate>
+								</ListView.ItemTemplate>
+							</ListView>
+							<DockPanel Grid.Column="1">
+								<Menu DockPanel.Dock="Top">
+									<MenuItem Header="Добавить">
+										<MenuItem Header="Добавить книгу" Command="{Binding AddDBBookCommand}"/>
+									</MenuItem>
+									<MenuItem Header="Удалить"/>
+									<MenuItem Header="Обновить" Command="{Binding ConnectDataBaseCommand}"/>
+								</Menu>
+								<DataGrid ItemsSource="{Binding SelectedTableDataBase.Table}" IsReadOnly="True" FontSize="14"
+									  EnableRowVirtualization="True" SelectionMode="Single"/>
+							</DockPanel>
+						</Grid>
 					</DockPanel>
 				</DockPanel>
 			</TabItem>
