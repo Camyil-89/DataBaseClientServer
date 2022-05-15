@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "API", "API\API.csproj", "{2ABC7FDB-493D-47EE-A19E-39D55FDD7C57}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExplorerDialog", "..\..\cs\ExplorerDialog\ExplorerDialog\ExplorerDialog.csproj", "{74B750F0-692A-4FE2-80EE-30F8C17FC498}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExplorerDialog", "ExplorerDialog\ExplorerDialog.csproj", "{54D1D4D6-4816-47B6-AF9D-858CB1FFFD09}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +29,10 @@ Global
 		{2ABC7FDB-493D-47EE-A19E-39D55FDD7C57}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2ABC7FDB-493D-47EE-A19E-39D55FDD7C57}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2ABC7FDB-493D-47EE-A19E-39D55FDD7C57}.Release|Any CPU.Build.0 = Release|Any CPU
-		{74B750F0-692A-4FE2-80EE-30F8C17FC498}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{74B750F0-692A-4FE2-80EE-30F8C17FC498}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{74B750F0-692A-4FE2-80EE-30F8C17FC498}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{74B750F0-692A-4FE2-80EE-30F8C17FC498}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54D1D4D6-4816-47B6-AF9D-858CB1FFFD09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54D1D4D6-4816-47B6-AF9D-858CB1FFFD09}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54D1D4D6-4816-47B6-AF9D-858CB1FFFD09}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54D1D4D6-4816-47B6-AF9D-858CB1FFFD09}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
