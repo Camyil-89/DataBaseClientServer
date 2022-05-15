@@ -107,9 +107,6 @@ namespace DataBaseClientServer.Models
 		}
 		public AwaitPackets SendPacketAndWaitResponse(API.Packet packet, int CountNeedReceive)
 		{
-			if (API.Base.IsAuthorizationClientUse.Contains(packet.TypePacket) && !IsAuthorization) throw new API.Excepcion.ExcepcionIsAuthorizationClientUse();
-			//if (!FirstUpdateKey) throw new API.Excepcion.ExcepcionFirstUpdateKey();
-
 			if (PacketsAwait.ContainsKey(packet.UID)) PacketsAwait.Remove(packet.UID);
 			PacketsAwait.Add(packet.UID, new AwaitPackets() { CountNeedReceive = CountNeedReceive });
 			Stopwatch stopwatch = new Stopwatch();
@@ -129,6 +126,7 @@ namespace DataBaseClientServer.Models
 			}
 			var x = PacketsAwait[packet.UID];
 			PacketsAwait.Remove(packet.UID);
+			if (x.Packets[0].TypePacket == API.TypePacket.DenayPacket) throw new API.Excepcion.ExcepcionIsAuthorizationClientUse();
 			return x;
 		}
 		public void Disconnect()

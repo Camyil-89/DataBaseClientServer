@@ -19,6 +19,7 @@ namespace API
 	#region авторизация
 	public enum AccessLevel : int
 	{
+		NonAuthorization = 0,
 		User = 1,
 		Worker = 10,
 		Admin = 100,
@@ -52,20 +53,25 @@ namespace API
 
 	public enum TypePacket : int
 	{
+		// NonAuthorization
 		Disconnect = 2,
 		Termination = 3,
-		Ping = 4,
 		UpdateKey = 5,
 		ConfirmKey = 6,
 		Authorization = 7,
 		AuthorizationFailed = 8,
+		// NonAuthorization
 
+		// Authorization
+		Ping = 4,
 
 		GetPathsDataBase = 9,
 		ConnectDataBase = 10,
 
 		SQLQuery = 11,
 		AllocTable = 12,
+		DenayPacket = 13,
+		// Authorization
 	}
 	[Serializable]
 	public class TableDataBase

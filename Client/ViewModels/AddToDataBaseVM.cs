@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Input;
 using API.Logging;
 using Client;
@@ -14,12 +17,13 @@ namespace DataBaseClientServer.ViewModels
 {
 	public class AddToDataBaseVM : Base.ViewModel.BaseViewModel
 	{
-		private ClientViewModel ClientViewModel { get; set; }
+		public readonly ClientViewModel ClientViewModel;
 		public Client.Views.Windows.AddToDataBaseWindow Window { get; set; }
 		public AddToDataBaseVM(ClientViewModel clientViewModel)
 		{
 			#region Commands
 			CloseCommand = new LambdaCommand(OnCloseCommand, CanCloseCommand);
+			AddRowCommand = new LambdaCommand(OnAddRowCommand, CanAddRowCommand);
 			#endregion
 			ClientViewModel = clientViewModel;
 		}
@@ -29,13 +33,13 @@ namespace DataBaseClientServer.ViewModels
 			
 		}
 
-		private AddType _AddDBType;
+		private AddType _AddDBType = AddType.AddBook;
 		public AddType AddDBType { get => _AddDBType; set => Set(ref _AddDBType, value); }
 
 		private string _Title;
 		public string Title { 
 			get 
-			{ 
+			{
 				switch (AddDBType)
 				{
 					case AddType.AddBook:
@@ -46,7 +50,94 @@ namespace DataBaseClientServer.ViewModels
 			} set => Set(ref _Title, value);
 		}
 
+		#region добавление книг
+		private Visibility _VisibilityAddBook = Visibility.Collapsed;
+		public Visibility VisibilityAddBook {
+			get
+			{
+				switch (AddDBType)
+				{
+					case AddType.AddBook:
+						return Visibility.Visible;
+					default:
+						return Visibility.Collapsed;
+				}
+				
+			}
+			set => Set(ref _VisibilityAddBook, value);
+		}
+		private ObservableCollection<DataRow> _ComboBoxTypeBook = new ObservableCollection<DataRow>();
+		public ObservableCollection<DataRow> ComboBoxTypeBook { get => _ComboBoxTypeBook; set => Set(ref _ComboBoxTypeBook, value); }
+
+
+		private DataRow _SelectedTypeBook;
+		public DataRow SelectedTypeBook { get => _SelectedTypeBook; set => Set(ref _SelectedTypeBook, value); }
+
+		private ObservableCollection<DataRow> _ComboBoxAuthor = new ObservableCollection<DataRow>();
+		public ObservableCollection<DataRow> ComboBoxAuthor { get => _ComboBoxAuthor; set => Set(ref _ComboBoxAuthor, value); }
+
+		private DataRow _SelectedAuthor;
+		public DataRow SelectedAuthor { get => _SelectedAuthor; set => Set(ref _SelectedAuthor, value); }
+
+		private ObservableCollection<DataRow> _ComboBoxGenre = new ObservableCollection<DataRow>();
+		public ObservableCollection<DataRow> ComboBoxGenre { get => _ComboBoxGenre; set => Set(ref _ComboBoxGenre, value); }
+
+		private DataRow _SelectedGenre;
+		public DataRow SelectedGenre { get => _SelectedGenre; set => Set(ref _SelectedGenre, value); }
+
+		private string _NameBook = string.Empty;
+		public string NameBook { get => _NameBook; set => Set(ref _NameBook, value); }
+
+		private float _Rating = -1;
+		public float Rating { get => _Rating; set => Set(ref _Rating, value); }
+		#endregion
+		public void FillProperty()
+		{
+			switch (AddDBType)
+			{
+				case AddType.AddBook:
+					var table = ClientViewModel.GetTableFromName("Тип книги");
+					ComboBoxTypeBook.Clear();
+					foreach (DataRow i in table.Table.Rows) ComboBoxTypeBook.Add(i);
+
+					table = ClientViewModel.GetTableFromName("Авторы");
+					ComboBoxAuthor.Clear();
+					foreach (DataRow i in table.Table.Rows) ComboBoxAuthor.Add(i);
+
+					table = ClientViewModel.GetTableFromName("жанр книг");
+					ComboBoxGenre.Clear();
+					foreach (DataRow i in table.Table.Rows) ComboBoxGenre.Add(i);
+
+					NameBook = string.Empty;
+					Rating = -1;
+					SelectedAuthor = null;
+					SelectedGenre = null;
+					SelectedTypeBook = null;
+					break;
+			}
+		}
 		#region Commnads
+		#region AddRowCommand
+		public ICommand AddRowCommand { get; set; }
+		public bool CanAddRowCommand(object e)
+		{
+			switch (AddDBType)
+			{
+				case AddType.AddBook:
+					return NameBook != string.Empty &&
+					Rating >= 0 &&
+					SelectedAuthor != null &&
+					SelectedGenre != null &&
+					SelectedTypeBook != null;
+				default:
+					return false;
+			}
+		}
+		public void OnAddRowCommand(object e)
+		{
+			
+		}
+		#endregion
 		#region CloseCommand
 		public ICommand CloseCommand { get; set; }
 		public bool CanCloseCommand(object e) => true;

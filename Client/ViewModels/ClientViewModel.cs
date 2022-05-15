@@ -128,6 +128,10 @@ namespace DataBaseClientServer.ViewModels
 			Client.CallDisconnect += Disconnect;
 			Client.ClientSerttings = ClientSerttings;
 		}
+		public API.TableDataBase GetTableFromName(string name)
+		{
+			return TablesDataBase.FirstOrDefault((i) => i.Table.TableName == name);
+		}
 		private void Current_Exit(object sender, System.Windows.ExitEventArgs e)
 		{
 			SaveXML();
@@ -200,10 +204,11 @@ namespace DataBaseClientServer.ViewModels
 		public void OpenAddDBWindow(AddType type)
 		{
 			AddToDataBaseWindow window = new AddToDataBaseWindow();
-			window.DataContext = AddToDataBaseVM;
 			AddToDataBaseVM.AddDBType = type;
 			AddToDataBaseVM.Window = window;
 			window.ShowInTaskbar = false;
+			AddToDataBaseVM.FillProperty();
+			window.DataContext = AddToDataBaseVM;
 			window.ShowDialog();
 		}
 		#region ConnectDataBaseCommand

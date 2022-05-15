@@ -93,7 +93,7 @@ namespace DataBaseClientServer.ViewModels
 			{
 				Set(ref _SelectUser, value);
 				if (SelectUser == -1) return;
-				UserName = Settings.Clients[SelectUser].Name;
+				UserName = Settings.Clients[SelectUser].Login;
 				UserPassword = Settings.Clients[SelectUser].Password;
 				switch (Settings.Clients[SelectUser].AccessLevel)
 				{
@@ -324,10 +324,10 @@ namespace DataBaseClientServer.ViewModels
 		/// </summary>
 		private void ChangeUser()
 		{
-			var find = Settings.Clients.FirstOrDefault((i) => i.Name == UserName && i.UID != Settings.Clients[SelectUser].UID);
+			var find = Settings.Clients.FirstOrDefault((i) => i.Login == UserName && i.UID != Settings.Clients[SelectUser].UID);
 			if (find == null)
 			{
-				Settings.Clients[SelectUser].Name = UserName;
+				Settings.Clients[SelectUser].Login = UserName;
 				Settings.Clients[SelectUser].Password = UserPassword;
 				Settings.Clients[SelectUser].AccessLevel = _AccessLevelUser;
 				MessageBox.Show($"Изменения внесены!", "Уведомление");
@@ -348,10 +348,10 @@ namespace DataBaseClientServer.ViewModels
 		/// </summary>
 		private void AddUser()
 		{
-			var find = Settings.Clients.FirstOrDefault((i) => i.Name == UserName);
+			var find = Settings.Clients.FirstOrDefault((i) => i.Login == UserName);
 			if (find == null)
 			{
-				Settings.Clients.Add(new Client() { Name = UserName, Password = UserPassword, AccessLevel = _AccessLevelUser, UID = Client.GenerateUIDClient(Settings.Clients) });
+				Settings.Clients.Add(new Client() { Login = UserName, Password = UserPassword, AccessLevel = _AccessLevelUser, UID = Client.GenerateUIDClient(Settings.Clients) });
 				UserName = "";
 				UserPassword = "";
 				AccessLevelUser = -1;

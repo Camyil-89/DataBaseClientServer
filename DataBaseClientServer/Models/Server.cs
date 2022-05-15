@@ -37,7 +37,6 @@ namespace DataBaseClientServer.Models
 
 		public ServerViewModel ServerViewModel { get; set; }
 
-		private int CountPacketReciveToUpdateKey = 3; // min 2
 
 		public ObservableCollection<TCPClient> tcpClients { get; set; } = new ObservableCollection<TCPClient>();
 
@@ -45,11 +44,11 @@ namespace DataBaseClientServer.Models
 
 		public Client GetClientFromDataBase(string Login, string Password)
 		{
-			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Name == Login && i.Password == Password);
+			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Login == Login && i.Password == Password);
 		}
 		public Client GetClientFromDataBaseLogin(string Login)
 		{
-			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Name == Login);
+			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Login == Login);
 		}
 		public Client GetClientFromDataBasePassword(string Password)
 		{
@@ -102,7 +101,6 @@ namespace DataBaseClientServer.Models
 		}
 		private API.Packet Authorization(API.Packet packet)
 		{
-			API.Packet authorization = new API.Packet();
 			var auth = (API.Authorization)packet.Data;
 			var client = GetClientFromDataBaseLogin(auth.Login);
 			if (client == null) return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = API.TypeErrorAuthorization.Login, UID = packet.UID };
@@ -125,6 +123,8 @@ namespace DataBaseClientServer.Models
 			int CountPacketRecive = 0;
 			int count_error_packet = 0;
 			EndPoint endPoint = Client.Client.RemoteEndPoint;
+
+			SettingsServer.Client ConnectClient = new SettingsServer.Client();
 			while (Client.Connected)
 			{
 				try
@@ -139,9 +139,16 @@ namespace DataBaseClientServer.Models
 					} while (networkStream.DataAvailable);
 
 					API.Packet packet = API.Packet.FromByteArray(allData.ToArray(), cipherAES);
-					Log.WriteLine($"[{Client.Client.RemoteEndPoint}] packet receive: {packet}");
+					
 					count_error_packet = 0;
-					if (!IsAuthorization && API.Base.IsAuthorizationClientUse.Contains(packet.TypePacket)) continue;
+					if (ConnectClient.DenayPackages(packet.TypePacket)) 
+					{
+						Log.WriteLine($"[{Client.Client.RemoteEndPoint}] packet denay: {packet}");
+						packet.TypePacket = API.TypePacket.DenayPacket;
+						API.Base.SendPacketClient(Client,packet, cipherAES);
+						continue; 
+					}
+					Log.WriteLine($"[{Client.Client.RemoteEndPoint}] packet receive: {packet}");
 					switch (packet.TypePacket)
 					{
 						case API.TypePacket.Disconnect:
@@ -164,7 +171,11 @@ namespace DataBaseClientServer.Models
 							break;
 						case API.TypePacket.Authorization:
 							var auth = Authorization(packet);
-							if (auth.TypePacket == API.TypePacket.Authorization) IsAuthorization = true;
+							if (auth.TypePacket == API.TypePacket.Authorization)
+							{
+								IsAuthorization = true;
+								ConnectClient = GetClientFromDataBaseLogin(((API.Authorization)packet.Data).Login);
+							}
 							API.Base.SendPacketClient(Client, auth, cipherAES);
 							Log.WriteLine($"[{Client.Client.RemoteEndPoint}] API.TypePacket.Authorization: {IsAuthorization}");
 							break;
