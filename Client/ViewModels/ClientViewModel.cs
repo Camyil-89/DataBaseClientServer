@@ -90,6 +90,9 @@ namespace DataBaseClientServer.ViewModels
 		private bool _WriteToTable = false;
 		public bool WriteToTable { get => _WriteToTable; set => Set(ref _WriteToTable, value); }
 
+		private int _IndexSelectRow = -1;
+		public int IndexSelectRow { get => _IndexSelectRow; set => Set(ref _IndexSelectRow, value); }
+
 		private API.AccessLevel _AccessLevel = API.AccessLevel.NonAuthorization;
 		public API.AccessLevel AccessLevel { get => _AccessLevel; set 
 			
@@ -128,6 +131,7 @@ namespace DataBaseClientServer.ViewModels
 			DisconnectServerCommand = new LambdaCommand(OnDisconnectServerCommand, CanDisconnectServerCommand);
 			ConnectDataBaseCommand = new LambdaCommand(OnConnectDataBaseCommand, CanConnectDataBaseCommand);
 			AddDBBookCommand = new LambdaCommand(OnAddDBBookCommand, CanAddDBBookCommand);
+			DeleteFromDBCommand = new LambdaCommand(OnDeleteFromDBCommand, CanDeleteFromDBCommand);
 			SetSettingsClient();
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
@@ -168,6 +172,7 @@ namespace DataBaseClientServer.ViewModels
 						InfoConnectText = "Подключение установлено!";
 						break;
 					case StatusClient.Disconnected:
+						AccessLevel = API.AccessLevel.NonAuthorization;
 						InfoConnectText = "Подключение не установлено!";
 						break;
 					case StatusClient.Connecting:
@@ -215,6 +220,44 @@ namespace DataBaseClientServer.ViewModels
 		#endregion
 
 		#region Commands
+		#region DeleteFromDBCommand
+		public ICommand DeleteFromDBCommand { get; set; }
+		public bool CanDeleteFromDBCommand(object e) => true;
+		public void OnDeleteFromDBCommand(object e)
+		{
+			if (IndexSelectRow == -1) return;
+			var row = "";
+			int index = 0;
+			foreach (DataColumn i in SelectedTableDataBase.Table.Columns)
+			{
+				row += $"{i.ColumnName}={SelectedTableDataBase.Table.Rows[IndexSelectRow][index]}; ";
+				index++;
+			}
+			var answer = MessageBox.Show($"Вы уверены что хотите удалить эту запись?\n" +
+				$"Таблица: {SelectedTableDataBase.Table.TableName}\n" +
+				$"Поле: {row}", "Удаление", MessageBoxButton.YesNo);
+			if (answer == MessageBoxResult.Yes)
+			{
+				BlockAllWorkInDataBase = true;
+				try
+				{
+					var packet = Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.SQLQuery, Data = $"DELETE FROM [{SelectedTableDataBase.Table.TableName}]" +
+						$" WHERE {SelectedTableDataBase.Table.Columns[0].ColumnName} = {SelectedTableDataBase.Table.Rows[IndexSelectRow].ItemArray[0]}" }, 1).Packets[0];
+					Console.WriteLine(packet);
+					if (packet.TypePacket == API.TypePacket.SQLQueryOK)
+					{
+						SelectedTableDataBase.Table.Rows.RemoveAt(IndexSelectRow);
+						MessageBox.Show($"Транзакция успешно выполнена!", "Уведомление");
+					}
+					else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) MessageBox.Show($"У вас недостаточно прав для выполнения данной операции!");
+					else if (packet.TypePacket == API.TypePacket.SQLQueryError) MessageBox.Show($"Произошла ошибка на стороне сервера!\n{packet.Data}");
+					else MessageBox.Show($"Сервер вернул что то непонятное:(", "Ошибка");
+				}
+				catch (Exception er) { MessageBox.Show($"Произошла непредвиденная ошибка!\n{er}", "Ошибка"); }
+			}
+			BlockAllWorkInDataBase = false;
+		}
+		#endregion
 		#region AddDBBookCommand
 		public ICommand AddDBBookCommand { get; set; }
 		public bool CanAddDBBookCommand(object e) => true;
@@ -239,7 +282,6 @@ namespace DataBaseClientServer.ViewModels
 				BlockAllWorkInDataBase = true;
 				try
 				{
-					
 					var packet = Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.SQLQuery, Data = sql_query}, 1).Packets[0];
 					Console.WriteLine(packet);
 					if (packet.TypePacket == API.TypePacket.SQLQueryOK)
@@ -250,7 +292,7 @@ namespace DataBaseClientServer.ViewModels
 						var row = table.Table.NewRow();
 						foreach (var i in dict) row[i.Key] = i.Value;
 						table.Table.Rows.Add(row);
-						MessageBox.Show($"Запись успешно добавлена!", "Уведомление");
+						MessageBox.Show($"Транзакция успешно выполнена!", "Уведомление");
 					}
 					else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) MessageBox.Show($"У вас недостаточно прав для выполнения данной операции!");
 					else if (packet.TypePacket == API.TypePacket.SQLQueryError) MessageBox.Show($"Произошла ошибка на стороне сервера!\n{packet.Data}");
