@@ -172,7 +172,7 @@
 							<RowDefinition Height="50"/>
 						</Grid.RowDefinitions>
 						<DockPanel Grid.Row="0">
-							<ListView Margin="5" ItemsSource="{Binding Settings.Clients}" FontSize="14" SelectedItem="{Binding SelectedUser}">
+							<ListView Margin="5" ItemsSource="{Binding Settings.Clients}" FontSize="14" SelectedItem="{Binding SelectedUser, UpdateSourceTrigger=PropertyChanged}">
 								<ListView.View>
 									
 									<GridView>
@@ -229,6 +229,7 @@
 							<TextBlock Grid.Row="2" Grid.Column="0" Text="Уровель доступа" Margin="5" FontSize="14" TextWrapping="WrapWithOverflow" HorizontalAlignment="Right"/>
 							<ComboBox Grid.Row="3" Grid.Column="1" Margin="5" FontSize="14" SelectedIndex="{Binding AccessLevelUser}" Height="25">
 								<ComboBoxItem Content="Пользователь" Tag="1"/>
+								<ComboBoxItem Content="Работник" Tag="10"/>
 								<ComboBoxItem Content="Админ" Tag="100"/>
 							</ComboBox>
 						</Grid>

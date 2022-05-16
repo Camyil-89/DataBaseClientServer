@@ -90,6 +90,8 @@ namespace DataBaseClientServer.ViewModels
 
 		private float _Rating = -1;
 		public float Rating { get => _Rating; set => Set(ref _Rating, value); }
+
+		private bool AddRow = false;
 		#endregion
 		public void FillProperty()
 		{
@@ -135,7 +137,41 @@ namespace DataBaseClientServer.ViewModels
 		}
 		public void OnAddRowCommand(object e)
 		{
-			
+			AddRow = true;
+			Window.Close();
+		}
+		public Dictionary<string, object> GetDataRow()
+		{
+			switch (AddDBType)
+			{
+				case AddType.AddBook:
+					DataTable dataTable = ClientViewModel.GetTableFromName("Книги").Table;
+					return new Dictionary<string, object>() {
+						{ "!TableName!", "Книги"},
+						{ "ID_книга", dataTable.Rows.Count + 1},
+						{ "Название", NameBook},
+						{ "ID_жанр", SelectedGenre.ItemArray[0]},
+						{ "Рейтинг", Rating},
+						{ "ID_автор", SelectedAuthor.ItemArray[0]},
+						{ "ID_тип", SelectedTypeBook.ItemArray[0]},
+					};
+			}
+			return null;
+		}
+		public string GetSQLQuery()
+		{
+			string sql = null;
+			if (!AddRow) return "exit";
+			switch (AddDBType)
+			{
+				case AddType.AddBook:
+					DataTable dataTable = ClientViewModel.GetTableFromName("Книги").Table;
+					sql = $"INSERT INTO Книги(ID_книга, Название, ID_жанр, Рейтинг, ID_автор, ID_тип) " +
+						$"VALUES({dataTable.Rows.Count + 1}, '{NameBook}', {SelectedGenre.ItemArray[0]}, {Rating}, {SelectedAuthor.ItemArray[0]}, {SelectedTypeBook.ItemArray[0]});";
+					break;
+			}
+			AddRow = false;
+			return sql;
 		}
 		#endregion
 		#region CloseCommand

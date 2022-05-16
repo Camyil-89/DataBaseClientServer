@@ -68,9 +68,14 @@ namespace API
 		GetPathsDataBase = 9,
 		ConnectDataBase = 10,
 
-		SQLQuery = 11,
 		AllocTable = 12,
 		DenayPacket = 13,
+		// query
+		SQLQuery = 11,
+		SQLQueryDenay = 14,
+		SQLQueryError = 15,
+		SQLQueryOK = 16,
+		// query
 		// Authorization
 	}
 	[Serializable]

@@ -28,7 +28,7 @@ namespace DataBaseClientServer.Models
 		private IPAddress _IPAddress = IPAddress.Parse("127.0.0.0");
 		public IPAddress IPAddress { get => _IPAddress; set => Set(ref _IPAddress, value); }
 
-		public delegate void Answer(API.Packet Packet,TcpClient client, API.CipherAES cipherAES);
+		public delegate void Answer(API.Packet Packet,TcpClient client, API.CipherAES cipherAES, SettingsServer.Client client_auth);
 		public event Answer CallAnswer;
 		public int SizeBuffer = 2048;
 
@@ -105,7 +105,7 @@ namespace DataBaseClientServer.Models
 			var client = GetClientFromDataBaseLogin(auth.Login);
 			if (client == null) return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = API.TypeErrorAuthorization.Login, UID = packet.UID };
 			if (client.Password != auth.Password) return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = API.TypeErrorAuthorization.Passsword, UID = packet.UID };
-			return new API.Packet() { TypePacket = API.TypePacket.Authorization, UID = packet.UID };
+			return new API.Packet() { TypePacket = API.TypePacket.Authorization, Data = client.AccessLevel, UID = packet.UID };
 		}
 		/// <summary>
 		/// Подключение клиента
@@ -180,7 +180,7 @@ namespace DataBaseClientServer.Models
 							Log.WriteLine($"[{Client.Client.RemoteEndPoint}] API.TypePacket.Authorization: {IsAuthorization}");
 							break;
 						default:
-							CallAnswer.Invoke(packet, Client, cipherAES);
+							CallAnswer.Invoke(packet, Client, cipherAES, ConnectClient);
 							break;
 					}
 					//if (CountPacketRecive >= CountPacketReciveToUpdateKey)

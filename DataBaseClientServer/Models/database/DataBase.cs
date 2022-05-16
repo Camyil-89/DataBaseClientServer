@@ -56,6 +56,7 @@ namespace DataBaseClientServer.Models.database
 		}
 		public DataTable SendQuery(string query)
 		{
+			Log.WriteLine(query);
 			OleDbDataAdapter myDataAdapter = new System.Data.OleDb.OleDbDataAdapter(query, myConnection);
 			DataTable dataTable = new DataTable();
 			myDataAdapter.Fill(dataTable);

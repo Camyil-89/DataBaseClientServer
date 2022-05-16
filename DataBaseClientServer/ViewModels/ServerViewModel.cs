@@ -121,6 +121,9 @@ namespace DataBaseClientServer.ViewModels
 						_AccessLevelUser = API.AccessLevel.User;
 						break;
 					case 1:
+						_AccessLevelUser = API.AccessLevel.Worker;
+						break;
+					case 2:
 						_AccessLevelUser = API.AccessLevel.Admin;
 						break;
 				}
@@ -225,7 +228,7 @@ namespace DataBaseClientServer.ViewModels
 						if (x.DataBase.Connect()) x.IsEnableStatus = StatusConnectDataBase.ConnectAccess;
 						else x.IsEnableStatus = StatusConnectDataBase.NotWork;
 					}
-				} catch { }
+				} catch (Exception e) { Log.WriteLine(e); }
 				
 				if (Settings.ServerSettings.AutoStartServer) Task.Run(() => { StartServer(); });
 			});
@@ -449,7 +452,7 @@ namespace DataBaseClientServer.ViewModels
 		///  Получение ответа от клиента
 		/// </summary>
 		/// <param name="Packet"></param>
-		private void Answer(API.Packet Packet, TcpClient client, API.CipherAES cipherAES)
+		private void Answer(API.Packet Packet, TcpClient client, API.CipherAES cipherAES, Models.SettingsServer.Client client_auth)
 		{
 			switch (Packet.TypePacket)
 			{
@@ -474,6 +477,21 @@ namespace DataBaseClientServer.ViewModels
 						//API.Base.SendPacketClient(client, Packet, cipherAES);
 					}
 					catch (Exception ex) { Console.WriteLine(ex); }
+					break;
+				case TypePacket.SQLQuery:
+					try
+					{
+						PathsToDataBase[0].DataBase.SendQuery(Packet.Data.ToString());
+						Packet.Data = null;
+						Packet.TypePacket = TypePacket.SQLQueryOK;
+						API.Base.SendPacketClient(client, Packet, cipherAES);
+					}
+					catch (Exception e)
+					{
+						Packet.Data = e;
+						Packet.TypePacket = TypePacket.SQLQueryError;
+						API.Base.SendPacketClient(client, Packet, cipherAES);
+					}
 					break;
 			}
 			Log.WriteLine(Packet);

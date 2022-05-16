@@ -161,7 +161,6 @@ namespace DataBaseClientServer.Models
 				sw.Start();
 				while (StatusClient != StatusClient.Disconnected)
 				{
-					//Console.WriteLine($"{FirstUpdateKey && sw.ElapsedMilliseconds >= TimeOutUpdateKeyAES && PacketsAwait.Count == 0} - {sw.ElapsedMilliseconds}");
 					if (FirstUpdateKey && sw.ElapsedMilliseconds >= TimeOutUpdateKeyAES && PacketsAwait.Count == 0 && !UpdateKey)
 					{
 						UpdateKey = true;

@@ -87,6 +87,28 @@ namespace DataBaseClientServer.ViewModels
 		private DataTable _Books = null;
 		public DataTable Books { get => _Books; set => Set(ref _Books, value); }
 
+		private bool _WriteToTable = false;
+		public bool WriteToTable { get => _WriteToTable; set => Set(ref _WriteToTable, value); }
+
+		private API.AccessLevel _AccessLevel = API.AccessLevel.NonAuthorization;
+		public API.AccessLevel AccessLevel { get => _AccessLevel; set 
+			
+			{
+				Set(ref _AccessLevel, value);
+				switch (_AccessLevel)
+				{
+					case API.AccessLevel.Worker:
+						WriteToTable = true;
+						break;
+					case API.AccessLevel.Admin:
+						WriteToTable = false;
+						break;
+					default:
+						WriteToTable = false;
+						break;
+				}
+			}
+		}
 
 		public AddToDataBaseVM AddToDataBaseVM;
 
@@ -210,6 +232,33 @@ namespace DataBaseClientServer.ViewModels
 			AddToDataBaseVM.FillProperty();
 			window.DataContext = AddToDataBaseVM;
 			window.ShowDialog();
+			string sql_query = AddToDataBaseVM.GetSQLQuery();
+			Console.WriteLine(sql_query);
+			if (sql_query != null && sql_query != "" && sql_query != "exit")
+			{
+				BlockAllWorkInDataBase = true;
+				try
+				{
+					
+					var packet = Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.SQLQuery, Data = sql_query}, 1).Packets[0];
+					Console.WriteLine(packet);
+					if (packet.TypePacket == API.TypePacket.SQLQueryOK)
+					{
+						var dict = AddToDataBaseVM.GetDataRow();
+						var table = GetTableFromName(dict["!TableName!"].ToString());
+						dict.Remove("!TableName!");
+						var row = table.Table.NewRow();
+						foreach (var i in dict) row[i.Key] = i.Value;
+						table.Table.Rows.Add(row);
+						MessageBox.Show($"Запись успешно добавлена!", "Уведомление");
+					}
+					else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) MessageBox.Show($"У вас недостаточно прав для выполнения данной операции!");
+					else if (packet.TypePacket == API.TypePacket.SQLQueryError) MessageBox.Show($"Произошла ошибка на стороне сервера!\n{packet.Data}");
+					else MessageBox.Show($"Сервер вернул что то непонятное:(", "Ошибка");
+				}
+				catch (Exception e) { MessageBox.Show($"Произошла непредвиденная ошибка!\n{e}", "Ошибка"); }
+			}
+			BlockAllWorkInDataBase = false;
 		}
 		#region ConnectDataBaseCommand
 		public ICommand ConnectDataBaseCommand { get; set; }
@@ -344,7 +393,6 @@ namespace DataBaseClientServer.ViewModels
 					}
 					else
 					{
-						//Thread.Sleep(1000);
 						Task.Run(() => { 
 							while (PingWork)
 							{
@@ -354,11 +402,8 @@ namespace DataBaseClientServer.ViewModels
 							PingStop = false;
 							PingServer();
 						});
+						AccessLevel = (API.AccessLevel)packet.Packets[0].Data;
 						ConnectDataBase();
-						//foreach (var i in (List<string>)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.GetPathsDataBase }, 1).Packets[0].Data)
-						//{
-						//	PathsToDataBase.Add(i);
-						//}
 
 					}
 				}
