@@ -36,6 +36,8 @@ namespace DataBaseClientServer.Models.SettingsServer
 						};
 				case API.AccessLevel.Worker:
 					return new List<API.TypePacket>() { };
+				case API.AccessLevel.Admin:
+					return new List<API.TypePacket>() { };
 				case API.AccessLevel.User:
 					return new List<API.TypePacket>() { API.TypePacket.SQLQuery };
 				default:

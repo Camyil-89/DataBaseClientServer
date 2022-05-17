@@ -61,9 +61,13 @@
     <Compile Include="Models\Client.cs" />
     <Compile Include="Models\Settings\ClientSerttings.cs" />
     <Compile Include="ViewModels\AddToDataBaseVM.cs" />
+    <Compile Include="ViewModels\AdminToolChangeVM.cs" />
     <Compile Include="ViewModels\ClientViewModel.cs" />
     <Compile Include="Views\Windows\AddToDataBaseWindow.xaml.cs">
       <DependentUpon>AddToDataBaseWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Windows\AdminToolChangeWindow.xaml.cs">
+      <DependentUpon>AdminToolChangeWindow.xaml</DependentUpon>
     </Compile>
     <Page Include="ClientWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -81,6 +85,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="Views\Windows\AddToDataBaseWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Windows\AdminToolChangeWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -117,8 +125,6 @@
       <Name>API</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Views\Pages\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

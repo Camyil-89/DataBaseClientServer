@@ -228,8 +228,8 @@ namespace DataBaseClientServer.ViewModels
 						if (x.DataBase.Connect()) x.IsEnableStatus = StatusConnectDataBase.ConnectAccess;
 						else x.IsEnableStatus = StatusConnectDataBase.NotWork;
 					}
+					PathsToDataBase[0].DataBase.SendQuery($"UPDATE Книги SET Название = 'test12312312', Рейтинг = '13' WHERE ID_книга = 5;");
 				} catch (Exception e) { Log.WriteLine(e); }
-				
 				if (Settings.ServerSettings.AutoStartServer) Task.Run(() => { StartServer(); });
 			});
 			//Settings.ServerSettings.PathsToDataBase.Add(new DataBaseConnectPath() { Path = "test", IsEnable = false });

@@ -87,6 +87,9 @@ namespace DataBaseClientServer.ViewModels
 		private DataTable _Books = null;
 		public DataTable Books { get => _Books; set => Set(ref _Books, value); }
 
+		private bool _IsAccessLevelAdmin = false;
+		public bool IsAccessLevelAdmin { get => _IsAccessLevelAdmin; set => Set(ref _IsAccessLevelAdmin, value); }
+
 		private bool _WriteToTable = false;
 		public bool WriteToTable { get => _WriteToTable; set => Set(ref _WriteToTable, value); }
 
@@ -102,18 +105,22 @@ namespace DataBaseClientServer.ViewModels
 				{
 					case API.AccessLevel.Worker:
 						WriteToTable = true;
+						IsAccessLevelAdmin = false;
 						break;
 					case API.AccessLevel.Admin:
-						WriteToTable = false;
+						WriteToTable = true;
+						IsAccessLevelAdmin = true;
 						break;
 					default:
 						WriteToTable = false;
+						IsAccessLevelAdmin = false;
 						break;
 				}
 			}
 		}
 
 		public AddToDataBaseVM AddToDataBaseVM;
+		public AdminToolChangeVM AdminToolChangeVM;
 
 		private bool PingWork = false;
 		private bool PingStop = false;
@@ -122,6 +129,7 @@ namespace DataBaseClientServer.ViewModels
 		public ClientViewModel()
 		{
 			AddToDataBaseVM = new AddToDataBaseVM(this);
+			AdminToolChangeVM = new AdminToolChangeVM(this);
 			BindingOperations.EnableCollectionSynchronization(PathsToDataBase, _lock); // доступ из всех потоков
 			ProviderXML.IV_AES = IV_LOAD;
 			ProviderXML.KEY_AES = KEY_LOAD;
@@ -132,6 +140,7 @@ namespace DataBaseClientServer.ViewModels
 			ConnectDataBaseCommand = new LambdaCommand(OnConnectDataBaseCommand, CanConnectDataBaseCommand);
 			AddDBBookCommand = new LambdaCommand(OnAddDBBookCommand, CanAddDBBookCommand);
 			DeleteFromDBCommand = new LambdaCommand(OnDeleteFromDBCommand, CanDeleteFromDBCommand);
+			ChangeAdminToolCommnad = new LambdaCommand(OnChangeAdminToolCommnad, CanChangeAdminToolCommnad);
 			SetSettingsClient();
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
@@ -220,6 +229,25 @@ namespace DataBaseClientServer.ViewModels
 		#endregion
 
 		#region Commands
+		#region ChangeAdminToolCommnad
+		public ICommand ChangeAdminToolCommnad { get; set; }
+		public bool CanChangeAdminToolCommnad(object e) => true;
+		public void OnChangeAdminToolCommnad(object e)
+		{
+			AdminToolChangeWindow window = new AdminToolChangeWindow();
+			window.DataContext = AdminToolChangeVM;
+			AdminToolChangeVM.Window = window;
+			AdminToolChangeVM.Table = new API.TableDataBase() { Table = SelectedTableDataBase.Table.Copy(), Status = SelectedTableDataBase.Status };
+			AdminToolChangeVM.Table.Table.RowChanged += AdminToolChangeVM.Table_RowChanged;
+			AdminToolChangeVM.Table.Table.Columns[0].ReadOnly = true;
+			window.ShowInTaskbar = false;
+			window.ShowDialog();
+			Console.WriteLine("---------");
+			foreach (DataRow i in AdminToolChangeVM.Table.Table.Rows) Console.WriteLine($"{string.Join(";", i.ItemArray)}");
+			Console.WriteLine("---------");
+			foreach (DataRow i in SelectedTableDataBase.Table.Rows) Console.WriteLine($"{string.Join(";", i.ItemArray)}");
+		}
+		#endregion
 		#region DeleteFromDBCommand
 		public ICommand DeleteFromDBCommand { get; set; }
 		public bool CanDeleteFromDBCommand(object e) => true;
