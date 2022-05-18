@@ -481,10 +481,21 @@ namespace DataBaseClientServer.ViewModels
 				case TypePacket.SQLQuery:
 					try
 					{
-						PathsToDataBase[0].DataBase.SendQuery(Packet.Data.ToString());
+						var sql_packet = (API.SQLQueryPacket)Packet.Data;
+						PathsToDataBase[0].DataBase.SendQuery(sql_packet.Data.ToString());
 						Packet.Data = null;
 						Packet.TypePacket = TypePacket.SQLQueryOK;
 						API.Base.SendPacketClient(client, Packet, cipherAES);
+						
+						//if (sql_packet.TypeSQLQuery == TypeSQLQuery.Broadcast) Server.BroadcastSend(new Packet() { TypePacket = TypePacket.UpdateTable, Data = new API.SQLQueryPacket() {Data = table, TableName = sql_packet.TableName } }, new List<Client>() { client_auth});
+						//else Server.BroadcastSend(new Packet() { TypePacket = TypePacket.UpdateTable, Data = new API.SQLQueryPacket() { Data = table, TableName = sql_packet.TableName } });
+						Task.Run(() =>
+						{
+							var table = PathsToDataBase[0].DataBase.SendQuery($"SELECT * FROM [{sql_packet.TableName}]");
+							table.TableName = sql_packet.TableName;
+							Thread.Sleep(20);
+							Server.BroadcastSend(new Packet() { TypePacket = TypePacket.UpdateTable, Data = new API.SQLQueryPacket() { Data = table, TableName = sql_packet.TableName } });
+						});
 					}
 					catch (Exception e)
 					{

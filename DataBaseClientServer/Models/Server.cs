@@ -39,6 +39,7 @@ namespace DataBaseClientServer.Models
 
 
 		public ObservableCollection<TCPClient> tcpClients { get; set; } = new ObservableCollection<TCPClient>();
+		public Dictionary<SettingsServer.Client, TCPClient> ConnectClientToDataBase { get; set; } = new Dictionary<SettingsServer.Client, TCPClient>();
 
 		private TcpListener tcpListener;
 
@@ -106,6 +107,23 @@ namespace DataBaseClientServer.Models
 			if (client == null) return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = API.TypeErrorAuthorization.Login, UID = packet.UID };
 			if (client.Password != auth.Password) return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = API.TypeErrorAuthorization.Passsword, UID = packet.UID };
 			return new API.Packet() { TypePacket = API.TypePacket.Authorization, Data = client.AccessLevel, UID = packet.UID };
+		}
+		public void BroadcastSend(API.Packet packet, List<SettingsServer.Client> clients = null)
+		{
+			Console.WriteLine("sdasdas12312");
+			foreach (var client in ConnectClientToDataBase)
+			{
+				try
+				{
+					if (clients != null && clients.Contains(client.Key)) continue;
+					Console.WriteLine(client.Key.AccessLevel);
+					if (client.Key.AccessLevel != API.AccessLevel.NonAuthorization)
+					{
+						Log.WriteLine($"Broadcast: {client.Key.Login} {client.Key.AccessLevel}");
+						API.Base.SendPacketClient(client.Value.Client, packet, client.Value.CipherAES);
+					}
+				} catch (Exception ex) { Log.WriteLine(ex); }
+			}
 		}
 		/// <summary>
 		/// Подключение клиента
@@ -175,6 +193,7 @@ namespace DataBaseClientServer.Models
 							{
 								IsAuthorization = true;
 								ConnectClient = GetClientFromDataBaseLogin(((API.Authorization)packet.Data).Login);
+								ConnectClientToDataBase.Add(ConnectClient, tCPClient);
 							}
 							API.Base.SendPacketClient(Client, auth, cipherAES);
 							Log.WriteLine($"[{Client.Client.RemoteEndPoint}] API.TypePacket.Authorization: {IsAuthorization}");
@@ -193,6 +212,7 @@ namespace DataBaseClientServer.Models
 				}
 				catch (Exception e) { count_error_packet++; if (count_error_packet == MaxCountErrorPacket) Client.Close(); Log.WriteLine(e); }
 			}
+			ConnectClientToDataBase.Remove(ConnectClient);
 			Log.WriteLine($"Client disconnect: {endPoint}");
 			tcpClients.Remove(tCPClient);
 		}

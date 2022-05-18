@@ -7,16 +7,18 @@
         xmlns:local="clr-namespace:Client.Views.Windows"
         mc:Ignorable="d"
         Title="{Binding Title}"
-		Height="450" Width="800">
+		Height="450"
+		Width="800"
+		WindowStartupLocation="CenterScreen">
 	<Window.DataContext>
 		<vm:AdminToolChangeVM/>
 	</Window.DataContext>
 	<DockPanel>
 		<Menu DockPanel.Dock="Top">
 			<MenuItem Header="Добавить запись" FontSize="14" Command="{Binding AddRowCommand}"/>
-			<MenuItem Header="Удалить" FontSize="14"/>
+			<MenuItem Header="Удалить" FontSize="14" Command="{Binding RemoveRowCommand}"/>
 		</Menu>
-		<DataGrid ItemsSource="{Binding Table.Table}" FontSize="14" CanUserAddRows="False" CanUserDeleteRows="False"
+		<DataGrid ItemsSource="{Binding Table.Table}" SelectedIndex="{Binding SelectedRow}" FontSize="14" CanUserAddRows="False"
 									  EnableRowVirtualization="True" SelectionMode="Single"/>
 	</DockPanel>
 </Window>

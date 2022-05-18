@@ -234,20 +234,67 @@ namespace DataBaseClientServer.ViewModels
 		public bool CanChangeAdminToolCommnad(object e) => true;
 		public void OnChangeAdminToolCommnad(object e)
 		{
+			if (SelectedTableDataBase == null) return;
 			AdminToolChangeWindow window = new AdminToolChangeWindow();
 			window.DataContext = AdminToolChangeVM;
+			AdminToolChangeVM.SQLQueryes.Clear();
 			AdminToolChangeVM.Window = window;
 			AdminToolChangeVM.Table = new API.TableDataBase() { Table = SelectedTableDataBase.Table.Copy(), Status = SelectedTableDataBase.Status };
 			AdminToolChangeVM.Table.Table.RowChanged += AdminToolChangeVM.Table_RowChanged;
+			AdminToolChangeVM.Table.Table.RowDeleting += AdminToolChangeVM.Table_RowDeleted;
 			AdminToolChangeVM.Table.Table.Columns[0].ReadOnly = true;
 			window.ShowInTaskbar = false;
 			window.ShowDialog();
-			Console.WriteLine("---------");
-			foreach (DataRow i in AdminToolChangeVM.Table.Table.Rows) Console.WriteLine($"{string.Join(";", i.ItemArray)}");
-			Console.WriteLine("---------");
-			foreach (DataRow i in SelectedTableDataBase.Table.Rows) Console.WriteLine($"{string.Join(";", i.ItemArray)}");
+
+			BlockAllWorkInDataBase = true;
+			Dictionary<string, string> queryes = new Dictionary<string, string>();
+			int count = 0;
+			foreach (var sql in AdminToolChangeVM.SQLQueryes)
+			{
+				try
+				{
+					//Console.WriteLine($"<>>>>{sql.Value}");
+					count++;
+					var packet = Client.SendPacketAndWaitResponse(GetPacketSQLQuery(sql.Value,SelectedTableDataBase.Table.TableName, API.TypeSQLQuery.BroadcastMe), 1).Packets[0];
+					//Console.WriteLine(packet);
+					if (packet.TypePacket == API.TypePacket.SQLQueryOK)
+					{
+						queryes.Add($"{count}", "Транзакция успешно выполнена!");
+					}
+					else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) queryes.Add($"{count}", "У вас недостаточно прав для выполнения данной операции!");
+					else if (packet.TypePacket == API.TypePacket.SQLQueryError) queryes.Add($"{count}", $"Произошла ошибка на стороне сервера!\n{packet.Data}");
+					else queryes.Add($"{count}", $"Сервер вернул что то непонятное:(");
+				}
+				catch (Exception er) { queryes.Add($"{count}", $"Произошла непредвиденная ошибка!\n{er}"); }
+				
+			}
+			string answer = "";
+			foreach (var i in queryes)
+			{
+				answer += $"Запрос: {i.Key}\n{i.Value}\n\n";
+			}
+			MessageBox.Show(answer, "Уведомление");
+			BlockAllWorkInDataBase = false;
+			//Console.WriteLine("---------");
+			//foreach (DataRow i in AdminToolChangeVM.Table.Table.Rows) Console.WriteLine($"{string.Join(";", i.ItemArray)}");
+			//Console.WriteLine("---------");
+			//foreach (DataRow i in SelectedTableDataBase.Table.Rows) Console.WriteLine($"{string.Join(";", i.ItemArray)}");
 		}
 		#endregion
+		public API.Packet GetPacketSQLQuery(object data, string TableName, API.TypeSQLQuery typeSQLQuery = API.TypeSQLQuery.Broadcast)
+		{
+			return new API.Packet() { TypePacket = API.TypePacket.SQLQuery, Data = new API.SQLQueryPacket() { TableName = TableName, Data = data, TypeSQLQuery = typeSQLQuery } };
+		}
+		public int GetID(DataTable dataTable)
+		{
+			int max_index = 0;
+			foreach (DataRow i in dataTable.Rows)
+			{
+				int temp = (int)i.ItemArray[0];
+				if (temp >= max_index) max_index = temp + 1;
+			}
+			return max_index;
+		}
 		#region DeleteFromDBCommand
 		public ICommand DeleteFromDBCommand { get; set; }
 		public bool CanDeleteFromDBCommand(object e) => true;
@@ -269,12 +316,11 @@ namespace DataBaseClientServer.ViewModels
 				BlockAllWorkInDataBase = true;
 				try
 				{
-					var packet = Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.SQLQuery, Data = $"DELETE FROM [{SelectedTableDataBase.Table.TableName}]" +
-						$" WHERE {SelectedTableDataBase.Table.Columns[0].ColumnName} = {SelectedTableDataBase.Table.Rows[IndexSelectRow].ItemArray[0]}" }, 1).Packets[0];
+					var packet = Client.SendPacketAndWaitResponse(GetPacketSQLQuery($"DELETE FROM [{SelectedTableDataBase.Table.TableName}]" +
+						$" WHERE {SelectedTableDataBase.Table.Columns[0].ColumnName} = {SelectedTableDataBase.Table.Rows[IndexSelectRow].ItemArray[0]}", SelectedTableDataBase.Table.TableName, API.TypeSQLQuery.BroadcastMe), 1).Packets[0];
 					Console.WriteLine(packet);
 					if (packet.TypePacket == API.TypePacket.SQLQueryOK)
 					{
-						SelectedTableDataBase.Table.Rows.RemoveAt(IndexSelectRow);
 						MessageBox.Show($"Транзакция успешно выполнена!", "Уведомление");
 					}
 					else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) MessageBox.Show($"У вас недостаточно прав для выполнения данной операции!");
@@ -304,22 +350,21 @@ namespace DataBaseClientServer.ViewModels
 			window.DataContext = AddToDataBaseVM;
 			window.ShowDialog();
 			string sql_query = AddToDataBaseVM.GetSQLQuery();
-			Console.WriteLine(sql_query);
 			if (sql_query != null && sql_query != "" && sql_query != "exit")
 			{
 				BlockAllWorkInDataBase = true;
 				try
 				{
-					var packet = Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.SQLQuery, Data = sql_query}, 1).Packets[0];
+					var dict = AddToDataBaseVM.GetDataRow();
+					var packet = Client.SendPacketAndWaitResponse(GetPacketSQLQuery(sql_query, dict["!TableName!"].ToString(), API.TypeSQLQuery.BroadcastMe), 1).Packets[0];
 					Console.WriteLine(packet);
 					if (packet.TypePacket == API.TypePacket.SQLQueryOK)
 					{
-						var dict = AddToDataBaseVM.GetDataRow();
-						var table = GetTableFromName(dict["!TableName!"].ToString());
-						dict.Remove("!TableName!");
-						var row = table.Table.NewRow();
-						foreach (var i in dict) row[i.Key] = i.Value;
-						table.Table.Rows.Add(row);
+						//var table = GetTableFromName(dict["!TableName!"].ToString());
+						//dict.Remove("!TableName!");
+						//var row = table.Table.NewRow();
+						//foreach (var i in dict) row[i.Key] = i.Value;
+						//table.Table.Rows.Add(row);
 						MessageBox.Show($"Транзакция успешно выполнена!", "Уведомление");
 					}
 					else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) MessageBox.Show($"У вас недостаточно прав для выполнения данной операции!");
@@ -414,6 +459,16 @@ namespace DataBaseClientServer.ViewModels
 		}
 		private void Answer(API.Packet Packet)
 		{
+			switch (Packet.TypePacket)
+			{
+				case API.TypePacket.UpdateTable:
+					API.SQLQueryPacket queryPacket = (API.SQLQueryPacket)Packet.Data;
+					var table = GetTableFromName(queryPacket.TableName);
+					table.Table = (DataTable)queryPacket.Data;
+					SelectedTableDataBase = GetTableFromName(TablesDataBase.FirstOrDefault((i) => i != table).Table.TableName);
+					SelectedTableDataBase = table;
+					break;
+			}
 			Console.WriteLine(Packet);
 		}
 		private void PingServer()

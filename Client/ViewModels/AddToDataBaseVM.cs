@@ -148,7 +148,7 @@ namespace DataBaseClientServer.ViewModels
 					DataTable dataTable = ClientViewModel.GetTableFromName("Книги").Table;
 					return new Dictionary<string, object>() {
 						{ "!TableName!", "Книги"},
-						{ "ID_книга", dataTable.Rows.Count + 1},
+						{ "ID_книга", ClientViewModel.GetID(dataTable)},
 						{ "Название", NameBook},
 						{ "ID_жанр", SelectedGenre.ItemArray[0]},
 						{ "Рейтинг", Rating},
@@ -167,7 +167,7 @@ namespace DataBaseClientServer.ViewModels
 				case AddType.AddBook:
 					DataTable dataTable = ClientViewModel.GetTableFromName("Книги").Table;
 					sql = $"INSERT INTO Книги(ID_книга, Название, ID_жанр, Рейтинг, ID_автор, ID_тип) " +
-						$"VALUES({dataTable.Rows.Count + 1}, '{NameBook}', {SelectedGenre.ItemArray[0]}, {Rating}, {SelectedAuthor.ItemArray[0]}, {SelectedTypeBook.ItemArray[0]});";
+						$"VALUES({ClientViewModel.GetID(dataTable)}, '{NameBook}', {SelectedGenre.ItemArray[0]}, {Rating}, {SelectedAuthor.ItemArray[0]}, {SelectedTypeBook.ItemArray[0]});";
 					break;
 			}
 			AddRow = false;

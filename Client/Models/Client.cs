@@ -109,6 +109,7 @@ namespace DataBaseClientServer.Models
 		{
 			if (PacketsAwait.ContainsKey(packet.UID)) PacketsAwait.Remove(packet.UID);
 			PacketsAwait.Add(packet.UID, new AwaitPackets() { CountNeedReceive = CountNeedReceive });
+			Console.WriteLine($"{packet} {packet.UID}");
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
 			while (UpdateKey || !FirstUpdateKey)
@@ -199,6 +200,7 @@ namespace DataBaseClientServer.Models
 					} while (networkStream.DataAvailable);
 
 					API.Packet packet = API.Packet.FromByteArray(allData.ToArray(), cipherAES);
+					Log.WriteLine(packet);
 					LastAnswer = DateTime.Now;
 					switch (packet.TypePacket)
 					{
@@ -221,7 +223,9 @@ namespace DataBaseClientServer.Models
 							UpdateKey = false;
 							break;
 						default:
-							if (PacketsAwait.ContainsKey(packet.UID)) { PacketsAwait[packet.UID].Packets.Add(packet); PacketsAwait[packet.UID].CountReceive++; }
+							//Console.WriteLine($"{string.Join(";",PacketsAwait.Keys)}");
+							Console.WriteLine($"{packet.UID} {PacketsAwait.ContainsKey(packet.UID)} {string.Join(";", PacketsAwait.Keys)}");
+							if (PacketsAwait.ContainsKey(packet.UID)) { Console.WriteLine(packet); PacketsAwait[packet.UID].Packets.Add(packet); PacketsAwait[packet.UID].CountReceive++; }
 							else if (packet != null) CallAnswer.Invoke(packet);
 							break;
 					}

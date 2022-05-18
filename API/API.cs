@@ -49,6 +49,11 @@ namespace API
 		NotExistsFile = 3,
 		IsNotWork = 4,
 	}
+	public enum TypeSQLQuery: int
+	{
+		BroadcastMe = 1,
+		Broadcast = 2,
+	}
 	#endregion
 
 	public enum TypePacket : int
@@ -69,6 +74,7 @@ namespace API
 		ConnectDataBase = 10,
 
 		AllocTable = 12,
+		UpdateTable = 17,
 		DenayPacket = 13,
 		// query
 		SQLQuery = 11,
@@ -114,7 +120,13 @@ namespace API
 		private DataTable _Table;
 		public DataTable Table { get => _Table; set => Set(ref _Table, value); }
 	}
-
+	[Serializable]
+	public class SQLQueryPacket
+	{
+		public object Data { get; set; }
+		public string TableName { get; set; } = "";
+		public TypeSQLQuery TypeSQLQuery { get; set; } = TypeSQLQuery.Broadcast;
+	}
 	[Serializable]
 	public class DataBasePacket
 	{
