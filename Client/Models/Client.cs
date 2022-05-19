@@ -10,10 +10,6 @@ using System.Diagnostics;
 using System.Windows;
 using DataBaseClientServer.Models.Settings;
 using API.Logging;
-using System.IO.Pipes;
-using System.IO.Pipelines;
-using System.Buffers;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace DataBaseClientServer.Models
 {
@@ -34,7 +30,7 @@ namespace DataBaseClientServer.Models
 		public int TimeOutUpdateKeyAES { get; set; } = 30000; // msc
 		public int TimeOut { get; set; } = 5000; // msc	
 		public int TimeOutConnect { get; set; } = 5000; // msc	
-		public int SizeBuffer { get; set; } = 8192;
+		public int SizeBuffer { get; set; } = 65000;
 		public ClientSerttings ClientSerttings { get; set; }
 
 		private StatusClient _StatusClient = StatusClient.Disconnected;
@@ -73,14 +69,10 @@ namespace DataBaseClientServer.Models
 		public event Answer CallAnswer;
 		public event DisconnectFromServer CallDisconnect;
 		private API.CipherAES cipherAES = new API.CipherAES();
-		public TimeSpan Ping()
-		{
-			DateTime last_answer = LastAnswer;
-			DateTime dateTime = DateTime.Now;
-			API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.Ping }, cipherAES);
-			while (last_answer == LastAnswer) { }
-			return LastAnswer - dateTime;
-		}
+		/// <summary>
+		/// Подключение к серверу
+		/// </summary>
+		/// <returns></returns>
 		public bool Connect()
 		{
 			try
@@ -100,6 +92,10 @@ namespace DataBaseClientServer.Models
 			return false;
 			
 		}
+		/// <summary>
+		/// Отключение при истечение времени оэидания
+		/// </summary>
+		/// <exception cref="API.Excepcion.ExcepcionTimeOut"></exception>
 		private void TimeOutException()
 		{
 			try
@@ -109,11 +105,18 @@ namespace DataBaseClientServer.Models
 			catch { }
 			throw new API.Excepcion.ExcepcionTimeOut();
 		}
+		/// <summary>
+		/// отправка пакета данных и ожидания его получения
+		/// </summary>
+		/// <param name="packet"></param>
+		/// <param name="CountNeedReceive"></param>
+		/// <returns></returns>
+		/// <exception cref="API.Excepcion.ExcepcionClientConnectLose"></exception>
+		/// <exception cref="API.Excepcion.ExcepcionIsAuthorizationClientUse"></exception>
 		public AwaitPackets SendPacketAndWaitResponse(API.Packet packet, int CountNeedReceive)
 		{
 			if (PacketsAwait.ContainsKey(packet.UID)) PacketsAwait.Remove(packet.UID);
 			PacketsAwait.Add(packet.UID, new AwaitPackets() { CountNeedReceive = CountNeedReceive });
-			Console.WriteLine($"{packet} {packet.UID}");
 			Stopwatch stopwatch = new Stopwatch();
 			stopwatch.Start();
 			while (UpdateKey || !FirstUpdateKey)
@@ -134,11 +137,17 @@ namespace DataBaseClientServer.Models
 			if (x.Packets[0].TypePacket == API.TypePacket.DenayPacket) throw new API.Excepcion.ExcepcionIsAuthorizationClientUse();
 			return x;
 		}
+		/// <summary>
+		/// Отключение от сервера
+		/// </summary>
 		public void Disconnect()
 		{
 			API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.Disconnect}, cipherAES);
 			_Client.Dispose();
 		}
+		/// <summary>
+		/// Главный цикл клиента
+		/// </summary>
 		public void ClientListener()
 		{
 			StatusClient = StatusClient.Connecting;
@@ -199,22 +208,34 @@ namespace DataBaseClientServer.Models
 				{
 					byte[] myReadBuffer = new byte[SizeBuffer];
 					List<byte> allData = new List<byte>();
-					do
+					if (ReceiveBytesNeeds != 0)
 					{
-						int numBytesRead = networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
-						if (numBytesRead == myReadBuffer.Length) allData.AddRange(myReadBuffer);
-						else if (numBytesRead > 0) allData.AddRange(myReadBuffer.Take(numBytesRead));
-						ReceiveBytesNow += numBytesRead;
-						Console.WriteLine(ReceiveBytesNow);
-					} while (networkStream.DataAvailable && ReceiveBytesNeeds != 0 && ReceiveBytesNeeds != ReceiveBytesNow);
+						while (ReceiveBytesNeeds != ReceiveBytesNow)
+						{
+							int numBytesRead = networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
+							if (numBytesRead == myReadBuffer.Length) allData.AddRange(myReadBuffer);
+							else if (numBytesRead > 0) allData.AddRange(myReadBuffer.Take(numBytesRead));
+							ReceiveBytesNow += numBytesRead;
+						}
+					}
+					else
+					{
+						do
+						{
+							int numBytesRead = networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
+							if (numBytesRead == myReadBuffer.Length) allData.AddRange(myReadBuffer);
+							else if (numBytesRead > 0) allData.AddRange(myReadBuffer.Take(numBytesRead));
+							ReceiveBytesNow += numBytesRead;
+						} while (networkStream.DataAvailable);
+					}
+					if (allData.Count == 0) continue;
 					ReceiveBytesNow = 0;
+					ReceiveBytesNeeds = 0;
 					API.Packet packet = API.Packet.FromByteArray(allData.ToArray(), cipherAES);
-					Log.WriteLine(packet);
 					LastAnswer = DateTime.Now;
 					switch (packet.TypePacket)
 					{
 						case API.TypePacket.Header:
-							Console.WriteLine($"><>>{packet.Data}");
 							ReceiveBytesNeeds = (int)packet.Data;
 							break;
 						case API.TypePacket.Termination:
@@ -236,9 +257,7 @@ namespace DataBaseClientServer.Models
 							UpdateKey = false;
 							break;
 						default:
-							//Console.WriteLine($"{string.Join(";",PacketsAwait.Keys)}");
-							Console.WriteLine($"{packet.UID} {PacketsAwait.ContainsKey(packet.UID)} {string.Join(";", PacketsAwait.Keys)}");
-							if (PacketsAwait.ContainsKey(packet.UID)) { Console.WriteLine(packet); PacketsAwait[packet.UID].Packets.Add(packet); PacketsAwait[packet.UID].CountReceive++; }
+							if (PacketsAwait.ContainsKey(packet.UID)) { PacketsAwait[packet.UID].Packets.Add(packet); PacketsAwait[packet.UID].CountReceive++; }
 							else if (packet != null) CallAnswer.Invoke(packet);
 							break;
 					}
@@ -250,6 +269,9 @@ namespace DataBaseClientServer.Models
 			CallDisconnect.Invoke(null);
 		}
 	}
+	/// <summary>
+	/// класс нужен для ожидания пакетов которые были отправлены из SendPacketAndWaitResponse
+	/// </summary>
 	public class AwaitPackets
 	{
 		public List<API.Packet> Packets { get; set; } = new List<API.Packet>();

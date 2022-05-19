@@ -40,6 +40,19 @@ namespace DataBaseClientServer.ViewModels
 		public string SelectPathToDataBase { get => _SelectPathToDataBase; set => Set(ref _SelectPathToDataBase, value); }
 		public ObservableCollection<string> PathsToDataBase { get; set; } = new ObservableCollection<string>();
 		#endregion
+		#region информация о клиенте
+		private string _UserName;
+		public string UserName { get => _UserName; set => Set(ref _UserName, value); }
+
+		private string _UserSurname;
+		public string UserSurname { get => _UserSurname; set => Set(ref _UserSurname, value); }
+
+		private string _UserPatronymic;
+		public string UserPatronymic { get => _UserPatronymic; set => Set(ref _UserPatronymic, value); }
+
+		private string _UserInfo;
+		public string UserInfo { get => _UserInfo; set => Set(ref _UserInfo, value); }
+		#endregion
 		#region Просмотр ключей шифрований
 		private Visibility _VisibilityKeyAES = Visibility.Collapsed;
 		public Visibility VisibilityKeyAES { get => _VisibilityKeyAES; set => Set(ref _VisibilityKeyAES, value); }
@@ -56,18 +69,25 @@ namespace DataBaseClientServer.ViewModels
 		#endregion
 		#region Авторизация
 		private string _PasswordBoxUser = "";
-		public string PasswordBoxUser { get => _PasswordBoxUser; set
+		public string PasswordBoxUser
+		{
+			get => _PasswordBoxUser; set
 			{
 				Set(ref _PasswordBoxUser, value);
 				if (CheckBoxHide) ClientSerttings.KernelSettings.PasswordUser = value;
-			} }
+			}
+		}
 
 		private bool _CheckBoxHide = false;
-		public bool CheckBoxHide { get => _CheckBoxHide; set {
+		public bool CheckBoxHide
+		{
+			get => _CheckBoxHide; set
+			{
 				Set(ref _CheckBoxHide, value);
 				if (value) PasswordBoxUser = ClientSerttings.KernelSettings.PasswordUser;
 				else PasswordBoxUser = "";
-			} }
+			}
+		}
 		private string _InfoConnectText = "";
 		public string InfoConnectText { get => _InfoConnectText; set => Set(ref _InfoConnectText, value); }
 
@@ -97,8 +117,10 @@ namespace DataBaseClientServer.ViewModels
 		public int IndexSelectRow { get => _IndexSelectRow; set => Set(ref _IndexSelectRow, value); }
 
 		private API.AccessLevel _AccessLevel = API.AccessLevel.NonAuthorization;
-		public API.AccessLevel AccessLevel { get => _AccessLevel; set 
-			
+		public API.AccessLevel AccessLevel
+		{
+			get => _AccessLevel; set
+
 			{
 				Set(ref _AccessLevel, value);
 				switch (_AccessLevel)
@@ -126,6 +148,9 @@ namespace DataBaseClientServer.ViewModels
 		private bool PingStop = false;
 		#endregion
 		#region Kernel
+		/// <summary>
+		/// Запуск клиента
+		/// </summary>
 		public ClientViewModel()
 		{
 			AddToDataBaseVM = new AddToDataBaseVM(this);
@@ -134,8 +159,6 @@ namespace DataBaseClientServer.ViewModels
 			ProviderXML.IV_AES = IV_LOAD;
 			ProviderXML.KEY_AES = KEY_LOAD;
 			ConnectServerCommand = new LambdaCommand(OnConnectServerCommand, CanConnectServerCommand);
-			PingServerCommand = new LambdaCommand(OnPingServerCommand, CanPingServerCommand);
-			AuthorizationServerCommand = new LambdaCommand(OnAuthorizationServerCommand, CanAuthorizationServerCommand);
 			DisconnectServerCommand = new LambdaCommand(OnDisconnectServerCommand, CanDisconnectServerCommand);
 			ConnectDataBaseCommand = new LambdaCommand(OnConnectDataBaseCommand, CanConnectDataBaseCommand);
 			AddDBBookCommand = new LambdaCommand(OnAddDBBookCommand, CanAddDBBookCommand);
@@ -155,6 +178,9 @@ namespace DataBaseClientServer.ViewModels
 				}
 			}
 		}
+		/// <summary>
+		/// Установка стандартных значений для сетевого клиента
+		/// </summary>
 		private void SetSettingsClient()
 		{
 			SelectPathToDataBase = null;
@@ -163,26 +189,45 @@ namespace DataBaseClientServer.ViewModels
 			Client.CallDisconnect += Disconnect;
 			Client.ClientSerttings = ClientSerttings;
 		}
+		/// <summary>
+		/// Поиск БД
+		/// </summary>
+		/// <param name="name"></param>
+		/// <returns></returns>
 		public API.TableDataBase GetTableFromName(string name)
 		{
 			return TablesDataBase.FirstOrDefault((i) => i.Table.TableName == name);
 		}
+		/// <summary>
+		/// Завершение работы 
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
 		private void Current_Exit(object sender, System.Windows.ExitEventArgs e)
 		{
 			SaveXML();
 		}
+		/// <summary>
+		/// Обновление информации о подключении
+		/// </summary>
 		private void InfoConnectTextUpdate()
 		{
 			while (true)
 			{
+				if (InfoConnectText == "Неверный логин!" || InfoConnectText == "Неверный пароль!" || InfoConnectText == "Такой пользователь уже подключен!") continue;
 				switch (Client.StatusClient)
 				{
 					case StatusClient.Connected:
 						InfoConnectText = "Подключение установлено!";
+						UserInfo = $"Добро пожаловать {UserSurname} {UserName} {UserPatronymic}";
 						break;
 					case StatusClient.Disconnected:
 						AccessLevel = API.AccessLevel.NonAuthorization;
 						InfoConnectText = "Подключение не установлено!";
+						UserName = "";
+						UserSurname = "";
+						UserPatronymic = "";
+						UserInfo = "";
 						break;
 					case StatusClient.Connecting:
 						InfoConnectText = "Подключение..";
@@ -191,6 +236,9 @@ namespace DataBaseClientServer.ViewModels
 				Thread.Sleep(250);
 			}
 		}
+		/// <summary>
+		/// Загрузка данных
+		/// </summary>
 		void LoadXML()
 		{
 			Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}\\Settings");
@@ -201,7 +249,7 @@ namespace DataBaseClientServer.ViewModels
 					ClientSerttings.ClientConnect = ProviderXML.Load<ClientConnect>($"{Directory.GetCurrentDirectory()}\\Settings\\ConnectClient.xml");
 				}
 			}
-			catch (Exception ex) { ClientSerttings.ClientConnect= new ClientConnect(); Log.WriteLine(ex); }
+			catch (Exception ex) { ClientSerttings.ClientConnect = new ClientConnect(); Log.WriteLine(ex); }
 			try
 			{
 				if (File.Exists($"{Directory.GetCurrentDirectory()}\\Settings\\KernelSettings.xml"))
@@ -212,6 +260,9 @@ namespace DataBaseClientServer.ViewModels
 			catch (Exception ex) { ClientSerttings.ClientConnect = new ClientConnect(); Log.WriteLine(ex); }
 			if (ClientSerttings.KernelSettings.AutoStartClient) Task.Run(() => { ConnectClient(); });
 		}
+		/// <summary>
+		/// Сохранение данных
+		/// </summary>
 		void SaveXML()
 		{
 			Directory.CreateDirectory($"{Directory.GetCurrentDirectory()}\\Settings");
@@ -230,6 +281,9 @@ namespace DataBaseClientServer.ViewModels
 
 		#region Commands
 		#region ChangeAdminToolCommnad
+		/// <summary>
+		/// Открытие окна редактирования БД для администратора и отправка на сервер данных
+		/// </summary>
 		public ICommand ChangeAdminToolCommnad { get; set; }
 		public bool CanChangeAdminToolCommnad(object e) => true;
 		public void OnChangeAdminToolCommnad(object e)
@@ -238,35 +292,62 @@ namespace DataBaseClientServer.ViewModels
 			AdminToolChangeWindow window = new AdminToolChangeWindow();
 			window.DataContext = AdminToolChangeVM;
 			AdminToolChangeVM.SQLQueryes.Clear();
+			AdminToolChangeVM.SQLQueryesInsert.Clear();
+			AdminToolChangeVM.Queries.Clear();
 			AdminToolChangeVM.Window = window;
 			AdminToolChangeVM.Table = new API.TableDataBase() { Table = SelectedTableDataBase.Table.Copy(), Status = SelectedTableDataBase.Status };
 			AdminToolChangeVM.Table.Table.RowChanged += AdminToolChangeVM.Table_RowChanged;
 			AdminToolChangeVM.Table.Table.RowDeleting += AdminToolChangeVM.Table_RowDeleted;
 			AdminToolChangeVM.Table.Table.Columns[0].ReadOnly = true;
+			AdminToolChangeVM.Title = $"Инструмент администратора - {AdminToolChangeVM.Table.Table.TableName}";
 			window.ShowInTaskbar = false;
 			window.ShowDialog();
+
+			if (AdminToolChangeVM.Queries.Count == 0) return;
+			if (AdminToolChangeVM.Queries.Count > 0)
+			{
+				string changes = "";
+				int count1 = 1;
+				foreach (var i in AdminToolChangeVM.SQLQueryesInsert)
+				{
+					changes += $"[{AdminToolChangeVM.Table.Table.Columns[0].ColumnName} {i.Key}] Транзакция {count1} - {i.Value.Command}\n";
+					count1++;
+				}
+				foreach (var i in AdminToolChangeVM.SQLQueryes)
+				{
+					changes += $"[{AdminToolChangeVM.Table.Table.Columns[0].ColumnName} {i.Key}] Транзакция {count1} - {i.Value.Command}\n";
+					count1++;
+				}
+				var answer1 = MessageBox.Show($"Вы уверены что хотите применить все изменения?\n{changes}", "Изменения", MessageBoxButton.YesNo);
+				if (answer1 == MessageBoxResult.No)
+				{
+					AdminToolChangeVM.SQLQueryes.Clear();
+					return;
+				}
+
+			}
 
 			BlockAllWorkInDataBase = true;
 			Dictionary<string, string> queryes = new Dictionary<string, string>();
 			int count = 0;
-			foreach (var sql in AdminToolChangeVM.SQLQueryes)
+			foreach (var sql in AdminToolChangeVM.Queries)
 			{
 				try
 				{
 					//Console.WriteLine($"<>>>>{sql.Value}");
 					count++;
-					var packet = Client.SendPacketAndWaitResponse(GetPacketSQLQuery(sql.Value,SelectedTableDataBase.Table.TableName, API.TypeSQLQuery.BroadcastMe), 1).Packets[0];
+					var packet = Client.SendPacketAndWaitResponse(GetPacketSQLQuery(sql.SQL, SelectedTableDataBase.Table.TableName, API.TypeSQLQuery.BroadcastMe), 1).Packets[0];
 					//Console.WriteLine(packet);
 					if (packet.TypePacket == API.TypePacket.SQLQueryOK)
 					{
-						queryes.Add($"{count}", "Транзакция успешно выполнена!");
+						queryes.Add($"{count} - {sql.Command}", "Транзакция успешно выполнена!");
 					}
 					else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) queryes.Add($"{count}", "У вас недостаточно прав для выполнения данной операции!");
 					else if (packet.TypePacket == API.TypePacket.SQLQueryError) queryes.Add($"{count}", $"Произошла ошибка на стороне сервера!\n{packet.Data}");
 					else queryes.Add($"{count}", $"Сервер вернул что то непонятное:(");
 				}
 				catch (Exception er) { queryes.Add($"{count}", $"Произошла непредвиденная ошибка!\n{er}"); }
-				
+
 			}
 			string answer = "";
 			foreach (var i in queryes)
@@ -281,10 +362,22 @@ namespace DataBaseClientServer.ViewModels
 			//foreach (DataRow i in SelectedTableDataBase.Table.Rows) Console.WriteLine($"{string.Join(";", i.ItemArray)}");
 		}
 		#endregion
+		/// <summary>
+		/// Создание пакета данных для отправки sql запроса
+		/// </summary>
+		/// <param name="data"></param>
+		/// <param name="TableName"></param>
+		/// <param name="typeSQLQuery"></param>
+		/// <returns></returns>
 		public API.Packet GetPacketSQLQuery(object data, string TableName, API.TypeSQLQuery typeSQLQuery = API.TypeSQLQuery.Broadcast)
 		{
 			return new API.Packet() { TypePacket = API.TypePacket.SQLQuery, Data = new API.SQLQueryPacket() { TableName = TableName, Data = data, TypeSQLQuery = typeSQLQuery } };
 		}
+		/// <summary>
+		/// Получает ид в бд
+		/// </summary>
+		/// <param name="dataTable"></param>
+		/// <returns></returns>
 		public int GetID(DataTable dataTable)
 		{
 			int max_index = 0;
@@ -296,6 +389,9 @@ namespace DataBaseClientServer.ViewModels
 			return max_index;
 		}
 		#region DeleteFromDBCommand
+		/// <summary>
+		/// Удаление из БД строки
+		/// </summary>
 		public ICommand DeleteFromDBCommand { get; set; }
 		public bool CanDeleteFromDBCommand(object e) => true;
 		public void OnDeleteFromDBCommand(object e)
@@ -333,6 +429,9 @@ namespace DataBaseClientServer.ViewModels
 		}
 		#endregion
 		#region AddDBBookCommand
+		/// <summary>
+		/// Открытие окна для добавления книг в таблицу БД
+		/// </summary>
 		public ICommand AddDBBookCommand { get; set; }
 		public bool CanAddDBBookCommand(object e) => true;
 		public void OnAddDBBookCommand(object e)
@@ -340,6 +439,9 @@ namespace DataBaseClientServer.ViewModels
 			OpenAddDBWindow(AddType.AddBook);
 		}
 		#endregion
+		/// <summary>
+		/// Открытие окна для добавления книг в таблицу БД и отправка на сервер данных
+		/// </summary>
 		public void OpenAddDBWindow(AddType type)
 		{
 			AddToDataBaseWindow window = new AddToDataBaseWindow();
@@ -376,17 +478,28 @@ namespace DataBaseClientServer.ViewModels
 			BlockAllWorkInDataBase = false;
 		}
 		#region ConnectDataBaseCommand
+		/// <summary>
+		/// Подключение к серверу
+		/// </summary>
 		public ICommand ConnectDataBaseCommand { get; set; }
-		public bool CanConnectDataBaseCommand(object e) => Client != null && 
+		public bool CanConnectDataBaseCommand(object e) => Client != null &&
 			Client.StatusClient == StatusClient.Connected &&
 			Client.IsAuthorization &&
 			!BlockAllWorkInDataBase;
+		/// <summary>
+		/// Получение БД
+		/// </summary>
+		/// <param name="e"></param>
 		public void OnConnectDataBaseCommand(object e)
 		{
-			Task.Run(() => {
+			Task.Run(() =>
+			{
 				ConnectDataBase();
 			});
 		}
+		/// <summary>
+		/// Получение БД
+		/// </summary>
 		public void ConnectDataBase()
 		{
 			BlockAllWorkInDataBase = true;
@@ -417,16 +530,10 @@ namespace DataBaseClientServer.ViewModels
 			BlockAllWorkInDataBase = false;
 		}
 		#endregion
-		#region AuthorizationServerCommand
-		public ICommand AuthorizationServerCommand { get; set; }
-		public bool CanAuthorizationServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Connected && !Client.IsAuthorization;
-		public void OnAuthorizationServerCommand(object e)
-		{
-			Console.WriteLine(Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Authorization, Data = new API.Authorization() { Login = "test", Password = "test" } }, 1));
-			//Console.WriteLine(Client.Ping().TotalMilliseconds);
-		}
-		#endregion
 		#region DisconnectServerCommand
+		/// <summary>
+		/// Отключение от сервера
+		/// </summary>
 		public ICommand DisconnectServerCommand { get; set; }
 		public bool CanDisconnectServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Connected;
 		public void OnDisconnectServerCommand(object e)
@@ -434,16 +541,10 @@ namespace DataBaseClientServer.ViewModels
 			DisconnectClient();
 		}
 		#endregion
-		#region PingServerCommand
-		public ICommand PingServerCommand { get; set; }
-		public bool CanPingServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Connected;
-		public void OnPingServerCommand(object e)
-		{
-			Console.WriteLine(Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Ping }, 1));
-			//Console.WriteLine(Client.Ping().TotalMilliseconds);
-		}
-		#endregion
 		#region ConnectServerCOmmand
+		/// <summary>
+		/// подключение к БД
+		/// </summary>
 		public ICommand ConnectServerCommand { get; set; }
 		public bool CanConnectServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Disconnected;
 		public void OnConnectServerCommand(object e)
@@ -452,11 +553,19 @@ namespace DataBaseClientServer.ViewModels
 		}
 		#endregion
 		#endregion
+		/// <summary>
+		/// делегат для сетевого клиента
+		/// </summary>
+		/// <param name="message"></param>
 		private void Disconnect(string message)
 		{
 			PingToServer = -1;
 			if (message != null) InfoConnectText = message;
 		}
+		/// <summary>
+		/// получение и обработка ответа от сервера
+		/// </summary>
+		/// <param name="Packet"></param>
 		private void Answer(API.Packet Packet)
 		{
 			switch (Packet.TypePacket)
@@ -471,6 +580,9 @@ namespace DataBaseClientServer.ViewModels
 			}
 			Console.WriteLine(Packet);
 		}
+		/// <summary>
+		/// Получение времени отклика сервера (пинг)
+		/// </summary>
 		private void PingServer()
 		{
 			PingWork = true;
@@ -491,12 +603,18 @@ namespace DataBaseClientServer.ViewModels
 			PingWork = false;
 			Log.WriteLine("PingServer: Dispose");
 		}
+		/// <summary>
+		/// Отключение от сервера
+		/// </summary>
 		private void DisconnectClient()
 		{
 			Client.Disconnect();
 			Client = new Models.Client();
 			Disconnect(null);
 		}
+		/// <summary>
+		/// Подключение к серверу и получение БД
+		/// </summary>
 		private void ConnectClient()
 		{
 			Client = new Models.Client();
@@ -507,18 +625,26 @@ namespace DataBaseClientServer.ViewModels
 				if (Client.Connect())
 				{
 					while (!Client.FirstUpdateKey) Thread.Sleep(1);
-					var packet = Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.Authorization,
-						Data = new API.Authorization() { Login = ClientSerttings.KernelSettings.LoginUser, Password = ClientSerttings.KernelSettings.PasswordUser} }, 1);
+					var packet = Client.SendPacketAndWaitResponse(new API.Packet()
+					{
+						TypePacket = API.TypePacket.Authorization,
+						Data = new API.Authorization() { Login = ClientSerttings.KernelSettings.LoginUser, Password = ClientSerttings.KernelSettings.PasswordUser }
+					}, 1);
+
+					API.InfoAboutClientPacket info_client = (API.InfoAboutClientPacket)packet.Packets[0].Data;
 					if (packet.Packets[0].TypePacket == API.TypePacket.AuthorizationFailed)
 					{
 						//var data_answer = (API.TypeErrorAuthorization)packet.Packets[0].Data;
-						//if (data_answer == API.TypeErrorAuthorization.Login) InfoConnectText = "Неверный логин!";
-						//else if (data_answer == API.TypeErrorAuthorization.Passsword) InfoConnectText = "Неверный пароль!";
+						if (info_client.Error == API.TypeErrorAuthorization.Login) InfoConnectText = "Неверный логин!";
+						else if (info_client.Error == API.TypeErrorAuthorization.Passsword) InfoConnectText = "Неверный пароль!";
+						else if (info_client.Error == API.TypeErrorAuthorization.ConnectNow) InfoConnectText = "Такой пользователь уже подключен!";
+						Client.Disconnect();
 						Client = new Models.Client();
 					}
 					else
 					{
-						Task.Run(() => { 
+						Task.Run(() =>
+						{
 							while (PingWork)
 							{
 								PingStop = true;
@@ -527,7 +653,10 @@ namespace DataBaseClientServer.ViewModels
 							PingStop = false;
 							PingServer();
 						});
-						AccessLevel = (API.AccessLevel)packet.Packets[0].Data;
+						AccessLevel = info_client.AccessLevel;
+						UserName = info_client.Name;
+						UserSurname = info_client.Surname;
+						UserPatronymic = info_client.Patronymic;
 						ConnectDataBase();
 
 					}

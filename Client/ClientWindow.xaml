@@ -28,8 +28,13 @@
 			</StatusBarItem>
 			<StatusBarItem>
 				<StackPanel Orientation="Horizontal">
-					<TextBlock Text="Состояние: "/>
-					<TextBlock Text="{Binding Client.StatusClient}"/>
+					<TextBlock Text="{Binding Client.StatusClient, StringFormat='Состояние: {0}'}"/>
+				</StackPanel>
+			</StatusBarItem>
+			<Separator/>
+			<StatusBarItem>
+				<StackPanel Orientation="Horizontal">
+					<TextBlock Text="{Binding UserInfo}"/>
 					<TextBlock Text="{Binding AccessLevel, StringFormat='Уровень доступа: {0}'}" Margin="10 0 0 0"/>
 				</StackPanel>
 			</StatusBarItem>

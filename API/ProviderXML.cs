@@ -14,7 +14,13 @@ namespace API.XML
 		public static byte[] KEY_AES { get; set; }
 		public static byte[] IV_AES { get; set; }
 
-		public static bool Encrypt = false;
+		public static bool Encrypt = true;
+		/// <summary>
+		/// Сохранение данных
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="path"></param>
+		/// <param name="obj"></param>
 		public static void Save<T>(string path, object obj)
 		{
 			Log.WriteLine($"Save: {path}");
@@ -46,6 +52,12 @@ namespace API.XML
 				}
 			}
 		}
+		/// <summary>
+		/// загрузка данных
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="filename"></param>
+		/// <returns></returns>
 		public static T Load<T>(string filename)
 		{
 			Log.WriteLine($"Load: {filename}");

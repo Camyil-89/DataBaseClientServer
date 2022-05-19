@@ -8,6 +8,9 @@ using DataBaseClientServer.Base.ViewModel;
 
 namespace DataBaseClientServer.Models.Settings
 {
+	/// <summary>
+	/// Настройки
+	/// </summary>
 	public class ClientSerttings : BaseViewModel
 	{
 		private ClientConnect _ClientConnect = new ClientConnect();
@@ -16,6 +19,9 @@ namespace DataBaseClientServer.Models.Settings
 		private KernelSettings _KernelSettings = new KernelSettings();
 		public KernelSettings KernelSettings { get => _KernelSettings; set => Set(ref _KernelSettings, value); }
 	}
+	/// <summary>
+	/// Настройки
+	/// </summary>
 	public class KernelSettings: BaseViewModel
 	{
 		private byte[] _IV_AES = API.CipherAES.IV_base;
@@ -34,6 +40,9 @@ namespace DataBaseClientServer.Models.Settings
 		private bool _AutoStartClient = false;
 		public bool AutoStartClient { get => _AutoStartClient; set => Set(ref _AutoStartClient, value); }
 	}
+	/// <summary>
+	/// Настройки
+	/// </summary>
 	public class ClientConnect : BaseViewModel
 	{
 		private byte[] _IPAddressServer = new byte[] { 0, 0, 0, 0 };

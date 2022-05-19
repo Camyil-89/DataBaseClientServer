@@ -30,7 +30,7 @@ namespace DataBaseClientServer.Models
 
 		public delegate void Answer(API.Packet Packet,TcpClient client, API.CipherAES cipherAES, SettingsServer.Client client_auth);
 		public event Answer CallAnswer;
-		public int SizeBuffer = 2048;
+		public int SizeBuffer = 65000;
 
 
 		public DataBase AccessDataBase = new DataBase();
@@ -42,19 +42,40 @@ namespace DataBaseClientServer.Models
 		public Dictionary<SettingsServer.Client, TCPClient> ConnectClientToDataBase { get; set; } = new Dictionary<SettingsServer.Client, TCPClient>();
 
 		private TcpListener tcpListener;
-
+		/// <summary>
+		/// получение клиента из БД
+		/// </summary>
+		/// <param name="Login"></param>
+		/// <param name="Password"></param>
+		/// <returns></returns>
 		public Client GetClientFromDataBase(string Login, string Password)
 		{
 			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Login == Login && i.Password == Password);
 		}
+		/// <summary>
+		/// получение клиента из БД
+		/// </summary>
+		/// <param name="Login"></param>
+		/// <returns></returns>
 		public Client GetClientFromDataBaseLogin(string Login)
 		{
 			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Login == Login);
 		}
+		/// <summary>
+		/// получение клиента из БД
+		/// </summary>
+		/// <param name="Password"></param>
+		/// <returns></returns>
 		public Client GetClientFromDataBasePassword(string Password)
 		{
 			return ServerViewModel.Settings.Clients.FirstOrDefault((i) => i.Password == Password);
 		}
+		/// <summary>
+		/// поиск клиента по БД
+		/// </summary>
+		/// <param name="Login"></param>
+		/// <param name="Password"></param>
+		/// <returns></returns>
 		public bool FindUserInDataBase(string Login, string Password)
 		{
 			return GetClientFromDataBase(Login, Password) != null;
@@ -100,23 +121,50 @@ namespace DataBaseClientServer.Models
 			}
 			tcpClients.Clear();
 		}
+		/// <summary>
+		/// Получение пакета данных с информации о подключении
+		/// </summary>
+		/// <param name="packet"></param>
+		/// <returns></returns>
 		private API.Packet Authorization(API.Packet packet)
 		{
 			var auth = (API.Authorization)packet.Data;
 			var client = GetClientFromDataBaseLogin(auth.Login);
-			if (client == null) return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = API.TypeErrorAuthorization.Login, UID = packet.UID };
-			if (client.Password != auth.Password) return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = API.TypeErrorAuthorization.Passsword, UID = packet.UID };
-			return new API.Packet() { TypePacket = API.TypePacket.Authorization, Data = client.AccessLevel, UID = packet.UID };
+			API.InfoAboutClientPacket info = new API.InfoAboutClientPacket();
+
+			if (client == null)
+			{
+				info.Error = API.TypeErrorAuthorization.Login;
+				return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = info, UID = packet.UID };
+			}
+			if (client.Password != auth.Password)
+			{
+				info.Error = API.TypeErrorAuthorization.Passsword;
+				return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = info, UID = packet.UID };
+			}
+			if (ConnectClientToDataBase.ContainsKey(client))
+			{
+				info.Error = API.TypeErrorAuthorization.ConnectNow;
+				return new API.Packet() { TypePacket = API.TypePacket.AuthorizationFailed, Data = info, UID = packet.UID };
+			}
+			info.Name = client.Name;
+			info.Surname = client.Surname;
+			info.Patronymic = client.Patronymic;
+			info.AccessLevel = client.AccessLevel;
+			return new API.Packet() { TypePacket = API.TypePacket.Authorization, Data = info, UID = packet.UID };
 		}
+		/// <summary>
+		/// Рассылка на всех подключенных клиентов
+		/// </summary>
+		/// <param name="packet"></param>
+		/// <param name="clients"></param>
 		public void BroadcastSend(API.Packet packet, List<SettingsServer.Client> clients = null)
 		{
-			Console.WriteLine("sdasdas12312");
 			foreach (var client in ConnectClientToDataBase)
 			{
 				try
 				{
 					if (clients != null && clients.Contains(client.Key)) continue;
-					Console.WriteLine(client.Key.AccessLevel);
 					if (client.Key.AccessLevel != API.AccessLevel.NonAuthorization)
 					{
 						Log.WriteLine($"Broadcast: {client.Key.Login} {client.Key.AccessLevel}");
@@ -189,13 +237,14 @@ namespace DataBaseClientServer.Models
 							break;
 						case API.TypePacket.Authorization:
 							var auth = Authorization(packet);
+							API.Base.SendPacketClient(Client, auth, cipherAES);
 							if (auth.TypePacket == API.TypePacket.Authorization)
 							{
 								IsAuthorization = true;
 								ConnectClient = GetClientFromDataBaseLogin(((API.Authorization)packet.Data).Login);
 								ConnectClientToDataBase.Add(ConnectClient, tCPClient);
 							}
-							API.Base.SendPacketClient(Client, auth, cipherAES);
+							else Client.Close();
 							Log.WriteLine($"[{Client.Client.RemoteEndPoint}] API.TypePacket.Authorization: {IsAuthorization}");
 							break;
 						default:
@@ -217,6 +266,9 @@ namespace DataBaseClientServer.Models
 			tcpClients.Remove(tCPClient);
 		}
 	}
+	/// <summary>
+	/// Информация о клиенте
+	/// </summary>
 	public class TCPClient: Base.ViewModel.BaseViewModel
 	{
 		private TcpClient _Client;

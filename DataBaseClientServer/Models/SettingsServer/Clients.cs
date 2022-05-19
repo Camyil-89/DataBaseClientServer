@@ -16,6 +16,15 @@ namespace DataBaseClientServer.Models.SettingsServer
 		private string _Password;
 		public string Password { get => _Password; set => Set(ref _Password, value); }
 
+		private string _Name;
+		public string Name { get => _Name; set => Set(ref _Name, value); }
+
+		private string _Surname;
+		public string Surname { get => _Surname; set => Set(ref _Surname, value); }
+
+		private string _Patronymic;
+		public string Patronymic { get => _Patronymic; set => Set(ref _Patronymic, value); }
+
 		private API.AccessLevel _AccessLevel = API.AccessLevel.NonAuthorization;
 		public API.AccessLevel AccessLevel { get => _AccessLevel; set => Set(ref _AccessLevel, value); }
 		public int UID { get; set; } //Guid.NewGuid().ToString();

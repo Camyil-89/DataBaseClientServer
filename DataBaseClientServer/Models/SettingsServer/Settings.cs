@@ -4,6 +4,9 @@ using System.Windows.Media;
 
 namespace DataBaseClientServer.Models.SettingsServer
 {
+	/// <summary>
+	/// Настройки
+	/// </summary>
 	[Serializable]
 	public class Settings: Base.ViewModel.BaseViewModel
 	{
@@ -11,6 +14,9 @@ namespace DataBaseClientServer.Models.SettingsServer
 		public ServerSettings ServerSettings { get => _ServerSettings; set => Set(ref _ServerSettings, value); }
 		public ObservableCollection<Client> Clients { get; set; } = new ObservableCollection<Client>();
 	}
+	/// <summary>
+	/// Настройки
+	/// </summary>
 	[Serializable]
 	public class ServerSettings: Base.ViewModel.BaseViewModel
 	{

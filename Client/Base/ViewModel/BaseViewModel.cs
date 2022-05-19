@@ -4,6 +4,9 @@ using System.Windows.Threading;
 
 namespace DataBaseClientServer.Base.ViewModel
 {
+	/// <summary>
+	/// базовый класс для наследования viewmodel
+	/// </summary>
 	public abstract class BaseViewModel : INotifyPropertyChanged
 	{
 		public event PropertyChangedEventHandler PropertyChanged;

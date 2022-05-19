@@ -184,7 +184,7 @@
 													</DataTemplate>
 												</GridViewColumn.CellTemplate>
 											</GridViewColumn>
-											<GridViewColumn Header="Имя" Width="auto">
+											<GridViewColumn Header="Логин" Width="auto">
 												<GridViewColumn.CellTemplate>
 													<DataTemplate>
 														<TextBlock Text="{Binding Login}"></TextBlock>
@@ -221,17 +221,26 @@
 								<RowDefinition/>
 								<RowDefinition/>
 								<RowDefinition/>
+								<RowDefinition/>
+								<RowDefinition/>
+								<RowDefinition/>
 							</Grid.RowDefinitions>
-							<TextBlock Grid.Row="0" Grid.Column="0" Text="Имя" Margin="5" FontSize="14" HorizontalAlignment="Right"/>
-							<TextBox Grid.Row="0" Grid.Column="1" Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" Margin="5" FontSize="14"/>
+							<TextBlock Grid.Row="0" Grid.Column="0" Text="Логин" Margin="5" FontSize="14" HorizontalAlignment="Right"/>
+							<TextBox Grid.Row="0" Grid.Column="1" Text="{Binding UserLogin, UpdateSourceTrigger=PropertyChanged}" Margin="5" FontSize="14"/>
 							<TextBlock Grid.Row="1" Grid.Column="0" Text="Пароль" Margin="5" FontSize="14" HorizontalAlignment="Right"/>
 							<TextBox Grid.Row="1" Grid.Column="1" Text="{Binding UserPassword, UpdateSourceTrigger=PropertyChanged}" Margin="5" FontSize="14"/>
 							<TextBlock Grid.Row="2" Grid.Column="0" Text="Уровель доступа" Margin="5" FontSize="14" TextWrapping="WrapWithOverflow" HorizontalAlignment="Right"/>
-							<ComboBox Grid.Row="3" Grid.Column="1" Margin="5" FontSize="14" SelectedIndex="{Binding AccessLevelUser}" Height="25">
+							<ComboBox Grid.Row="2" Grid.Column="1" Margin="5" FontSize="14" SelectedIndex="{Binding AccessLevelUser}" Height="25">
 								<ComboBoxItem Content="Пользователь" Tag="1"/>
 								<ComboBoxItem Content="Работник" Tag="10"/>
 								<ComboBoxItem Content="Админ" Tag="100"/>
 							</ComboBox>
+							<TextBlock Grid.Row="3" Grid.Column="0" Text="Фамилия" Margin="5" FontSize="14" TextWrapping="WrapWithOverflow" HorizontalAlignment="Right"/>
+							<TextBox Grid.Row="3" Grid.Column="1" Text="{Binding UserSurname, UpdateSourceTrigger=PropertyChanged}" Margin="5" FontSize="14"/>
+							<TextBlock Grid.Row="4" Grid.Column="0" Text="Имя" Margin="5" FontSize="14" TextWrapping="WrapWithOverflow" HorizontalAlignment="Right"/>
+							<TextBox Grid.Row="4" Grid.Column="1" Text="{Binding UserName, UpdateSourceTrigger=PropertyChanged}" Margin="5" FontSize="14"/>
+							<TextBlock Grid.Row="5" Grid.Column="0" Text="Отчество" Margin="5" FontSize="14" TextWrapping="WrapWithOverflow" HorizontalAlignment="Right"/>
+							<TextBox Grid.Row="5" Grid.Column="1" Text="{Binding UserPatronymic, UpdateSourceTrigger=PropertyChanged}" Margin="5" FontSize="14"/>
 						</Grid>
 						<Button Content="{Binding TextButtonAddDeleteChange}" Width="200" Margin="5" FontSize="14" Height="27" Command="{Binding AddUserCommand}"/>
 					</StackPanel>

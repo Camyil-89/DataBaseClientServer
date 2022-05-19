@@ -93,6 +93,9 @@ namespace DataBaseClientServer.ViewModels
 
 		private bool AddRow = false;
 		#endregion
+		/// <summary>
+		/// устанавливает значения
+		/// </summary>
 		public void FillProperty()
 		{
 			switch (AddDBType)
@@ -120,6 +123,9 @@ namespace DataBaseClientServer.ViewModels
 		}
 		#region Commnads
 		#region AddRowCommand
+		/// <summary>
+		/// команда для кнопки добавления
+		/// </summary>
 		public ICommand AddRowCommand { get; set; }
 		public bool CanAddRowCommand(object e)
 		{
@@ -140,6 +146,10 @@ namespace DataBaseClientServer.ViewModels
 			AddRow = true;
 			Window.Close();
 		}
+		/// <summary>
+		/// получение новой записи
+		/// </summary>
+		/// <returns></returns>
 		public Dictionary<string, object> GetDataRow()
 		{
 			switch (AddDBType)
@@ -158,6 +168,10 @@ namespace DataBaseClientServer.ViewModels
 			}
 			return null;
 		}
+		/// <summary>
+		/// получение sql запроса
+		/// </summary>
+		/// <returns></returns>
 		public string GetSQLQuery()
 		{
 			string sql = null;
@@ -175,6 +189,9 @@ namespace DataBaseClientServer.ViewModels
 		}
 		#endregion
 		#region CloseCommand
+		/// <summary>
+		/// Закрытие окна
+		/// </summary>
 		public ICommand CloseCommand { get; set; }
 		public bool CanCloseCommand(object e) => true;
 		public void OnCloseCommand(object e)

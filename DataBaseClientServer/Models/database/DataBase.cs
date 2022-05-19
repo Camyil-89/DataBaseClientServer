@@ -15,7 +15,10 @@ namespace DataBaseClientServer.Models.database
 		public string Path { get; set; } = "Database.mdb";
 		public string Provider = "Provider=Microsoft.Jet.OLEDB.4.0";
 		private OleDbConnection myConnection;
-
+		/// <summary>
+		/// Подключение БД
+		/// </summary>
+		/// <returns></returns>
 		public bool Connect()
 		{
 			try
@@ -27,6 +30,10 @@ namespace DataBaseClientServer.Models.database
 			} catch (Exception e) { Log.WriteLine($"Error connect database: {e}"); return false; }
 			
 		}
+		/// <summary>
+		/// Получение таблиц из БД
+		/// </summary>
+		/// <returns></returns>
 		public ObservableCollection<API.TableDataBase> GetTablesDT()
 		{
 			ObservableCollection<API.TableDataBase> tablesDataBase = new ObservableCollection<API.TableDataBase>();
@@ -43,6 +50,10 @@ namespace DataBaseClientServer.Models.database
 			}
 			return tablesDataBase;
 		}
+		/// <summary>
+		/// получение названий таблиц
+		/// </summary>
+		/// <returns></returns>
 		public List<string> GetTables()
 		{
 			List<string> DtataBaseNames = new List<string>();
@@ -54,6 +65,11 @@ namespace DataBaseClientServer.Models.database
 			}
 			return DtataBaseNames;
 		}
+		/// <summary>
+		/// отправка в БД sql запроса
+		/// </summary>
+		/// <param name="query"></param>
+		/// <returns></returns>
 		public DataTable SendQuery(string query)
 		{
 			Log.WriteLine(query);

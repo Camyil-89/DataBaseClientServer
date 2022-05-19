@@ -3,6 +3,9 @@ using System.Windows.Input;
 
 namespace DataBaseClientServer.Base.Command
 {
+	/// <summary>
+	/// класс для создания команды
+	/// </summary>
 	internal abstract class Command : ICommand
 	{
 		public event EventHandler CanExecuteChanged

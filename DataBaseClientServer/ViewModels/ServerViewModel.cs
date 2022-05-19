@@ -52,6 +52,11 @@ namespace DataBaseClientServer.ViewModels
 		private Visibility _VisibilitySelectUser = Visibility.Collapsed;
 		public Visibility VisibilitySelectUser { get => _VisibilitySelectUser; set => Set(ref _VisibilitySelectUser, value); }
 
+		public Dictionary<string, DateTime> BroadcastTable = new Dictionary<string, DateTime>();
+
+		/// <summary>
+		/// выбор режима работы (изменить, добамить, удалить)
+		/// </summary>
 		private int _SelectMode = 0;
 		public int SelectMode
 		{
@@ -61,9 +66,12 @@ namespace DataBaseClientServer.ViewModels
 				Set(ref _SelectMode, value);
 				if (value == 0)
 				{
-					UserName = "";
+					UserLogin = "";
 					UserPassword = "";
 					AccessLevelUser = -1;
+					UserName = "";
+					UserSurname = "";
+					UserPatronymic = "";
 				}
 				if (value != 0) VisibilitySelectUser = Visibility.Visible;
 				else VisibilitySelectUser = Visibility.Collapsed;
@@ -85,6 +93,9 @@ namespace DataBaseClientServer.ViewModels
 			}
 		}
 
+		/// <summary>
+		/// Выбор пользователя из списка и отображение информации о нем
+		/// </summary>
 		private int _SelectUser = -1;
 		public int SelectUser
 		{
@@ -93,20 +104,28 @@ namespace DataBaseClientServer.ViewModels
 			{
 				Set(ref _SelectUser, value);
 				if (SelectUser == -1) return;
-				UserName = Settings.Clients[SelectUser].Login;
+				UserLogin = Settings.Clients[SelectUser].Login;
 				UserPassword = Settings.Clients[SelectUser].Password;
+				UserName = Settings.Clients[SelectUser].Name;
+				UserSurname = Settings.Clients[SelectUser].Surname;
+				UserPatronymic = Settings.Clients[SelectUser].Patronymic;
 				switch (Settings.Clients[SelectUser].AccessLevel)
 				{
 					case API.AccessLevel.User:
 						AccessLevelUser = 0;
 						break;
-					case API.AccessLevel.Admin:
+					case API.AccessLevel.Worker:
 						AccessLevelUser = 1;
+						break;
+					case API.AccessLevel.Admin:
+						AccessLevelUser = 2;
 						break;
 				}
 			}
 		}
-
+		/// <summary>
+		/// конвертер из числа в уровень достпа
+		/// </summary>
 		private API.AccessLevel _AccessLevelUser;
 		private int _AccessLevelUserComboBox = -1;
 		public int AccessLevelUser
@@ -136,8 +155,18 @@ namespace DataBaseClientServer.ViewModels
 				if (SelectMode != 0) SelectUser = Settings.Clients.IndexOf(SelectedUser);
 			} }
 
+		private string _UserLogin = "";
+		public string UserLogin { get => _UserLogin; set => Set(ref _UserLogin, value); }
+
 		private string _UserName = "";
 		public string UserName { get => _UserName; set => Set(ref _UserName, value); }
+
+		private string _UserSurname = "";
+		public string UserSurname { get => _UserSurname; set => Set(ref _UserSurname, value); }
+
+		private string _UserPatronymic = "";
+		public string UserPatronymic { get => _UserPatronymic; set => Set(ref _UserPatronymic, value); }
+
 
 		private string _UserPassword = "";
 		public string UserPassword { get => _UserPassword; set => Set(ref _UserPassword, value); }
@@ -159,9 +188,9 @@ namespace DataBaseClientServer.ViewModels
 		/// </summary>
 		public ServerViewModel()
 		{
+			BindingOperations.EnableCollectionSynchronization(Server.tcpClients, _lock); // доступ из всех потоков
 			Log.WriteLine("ServerViewModel");
 			#region Commands
-			LoadServerCommand = new LambdaCommand(OnLoadServerCommand, CanLoadServerCommand);
 			StartServerListenerCommand = new LambdaCommand(OnStartServerListenerCommand, CanStartServerListenerCommand);
 			StopServerListenerCommand = new LambdaCommand(OnStopServerListenerCommand, CanStopServerListenerCommand);
 			AddUserCommand = new LambdaCommand(OnAddUserCommand, CanAddUserCommand);
@@ -171,7 +200,6 @@ namespace DataBaseClientServer.ViewModels
 			Server.ServerViewModel = this;
 			ProviderXML.IV_AES = IV_LOAD;
 			ProviderXML.KEY_AES = KEY_LOAD;
-			BindingOperations.EnableCollectionSynchronization(Server.tcpClients, _lock); // доступ из всех потоков
 
 			Server.CallAnswer += Answer;
 			foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
@@ -228,14 +256,9 @@ namespace DataBaseClientServer.ViewModels
 						if (x.DataBase.Connect()) x.IsEnableStatus = StatusConnectDataBase.ConnectAccess;
 						else x.IsEnableStatus = StatusConnectDataBase.NotWork;
 					}
-					PathsToDataBase[0].DataBase.SendQuery($"UPDATE Книги SET Название = 'test12312312', Рейтинг = '13' WHERE ID_книга = 5;");
 				} catch (Exception e) { Log.WriteLine(e); }
 				if (Settings.ServerSettings.AutoStartServer) Task.Run(() => { StartServer(); });
 			});
-			//Settings.ServerSettings.PathsToDataBase.Add(new DataBaseConnectPath() { Path = "test", IsEnable = false });
-			//Settings.ServerSettings.PathsToDataBase.Add(new DataBaseConnectPath() { Path = "test.txt", IsEnable = true });
-			//Settings.Clients.Add(new Client() { AccessLevel = API.AccessLevel.Admin, Name = "test2", Password = "123", UID = Client.GenerateUIDClient(Settings.Clients)});
-			//Settings.Clients.Add(new Client() { AccessLevel = API.AccessLevel.User, Name = "test2", Password = "123", UID = Client.GenerateUIDClient(Settings.Clients)});
 		}
 		/// <summary>
 		/// Сохранение всех необходимых данных
@@ -270,6 +293,9 @@ namespace DataBaseClientServer.ViewModels
 		}
 		#endregion
 		#region AddDataBasePath
+		/// <summary>
+		/// Добавление базы данных
+		/// </summary>
 		public ICommand AddDataBasePathCommand { get; set; }
 		public bool CanAddDataBasePathCommand(object e) => true;
 		public void OnAddDataBasePathCommand(object e)
@@ -291,17 +317,20 @@ namespace DataBaseClientServer.ViewModels
 		}
 		#endregion
 		#region AddUser
+		/// <summary>
+		/// Выбор неоюходимой функции в зависимости от режима работы
+		/// </summary>
 		public ICommand AddUserCommand { get; set; }
 		public bool CanAddUserCommand(object e)
 		{
 			switch (SelectMode)
 			{
 				case 0:
-					return UserName != "" && UserPassword != "" && AccessLevelUser != -1;
+					return UserLogin != "" && UserPassword != "" && AccessLevelUser != -1 && UserName != "" && UserSurname != "" && UserPatronymic != "";
 				case 1:
 					return SelectUser != -1 && SelectUser < Settings.Clients.Count;
 				case 2:
-					return SelectUser != -1 && UserName != "" && UserPassword != "" && AccessLevelUser != -1;
+					return SelectUser != -1 && UserLogin != "" && UserPassword != "" && AccessLevelUser != -1 && UserName != "" && UserSurname != "" && UserPatronymic != "";
 				default:
 					return false;
 			}
@@ -327,15 +356,18 @@ namespace DataBaseClientServer.ViewModels
 		/// </summary>
 		private void ChangeUser()
 		{
-			var find = Settings.Clients.FirstOrDefault((i) => i.Login == UserName && i.UID != Settings.Clients[SelectUser].UID);
+			var find = Settings.Clients.FirstOrDefault((i) => i.Login == UserLogin && i.UID != Settings.Clients[SelectUser].UID);
 			if (find == null)
 			{
-				Settings.Clients[SelectUser].Login = UserName;
+				Settings.Clients[SelectUser].Login = UserLogin;
 				Settings.Clients[SelectUser].Password = UserPassword;
 				Settings.Clients[SelectUser].AccessLevel = _AccessLevelUser;
+				Settings.Clients[SelectUser].Name = UserName;
+				Settings.Clients[SelectUser].Surname = UserSurname;
+				Settings.Clients[SelectUser].Patronymic = UserPatronymic;
 				MessageBox.Show($"Изменения внесены!", "Уведомление");
 			}
-			else MessageBox.Show($"Пользователь с именем \"{UserName}\" уже добавлен", "Уведомление");
+			else MessageBox.Show($"Пользователь с именем \"{UserLogin}\" уже добавлен", "Уведомление");
 		}
 		/// <summary>
 		/// Удаление пользователя из базы
@@ -351,19 +383,31 @@ namespace DataBaseClientServer.ViewModels
 		/// </summary>
 		private void AddUser()
 		{
-			var find = Settings.Clients.FirstOrDefault((i) => i.Login == UserName);
+			var find = Settings.Clients.FirstOrDefault((i) => i.Login == UserLogin);
 			if (find == null)
 			{
-				Settings.Clients.Add(new Client() { Login = UserName, Password = UserPassword, AccessLevel = _AccessLevelUser, UID = Client.GenerateUIDClient(Settings.Clients) });
-				UserName = "";
+				Settings.Clients.Add(new Client() { Login = UserLogin,
+					Password = UserPassword,
+					Name = UserName,
+					Surname = UserSurname,
+					Patronymic = UserPatronymic, 
+					AccessLevel = _AccessLevelUser,
+					UID = Client.GenerateUIDClient(Settings.Clients) });
+				UserLogin = "";
 				UserPassword = "";
 				AccessLevelUser = -1;
+				UserName = "";
+				UserSurname = "";
+				UserPatronymic = "";
 				MessageBox.Show($"Пользователь успешно добавлен!", "Уведомление");
 			}
-			else MessageBox.Show($"Пользователь с именем \"{UserName}\" уже добавлен", "Уведомление");
+			else MessageBox.Show($"Пользователь с именем \"{UserLogin}\" уже добавлен", "Уведомление");
 		}
 		#endregion
 		#region StopServerListenerCommand
+		/// <summary>
+		/// Остановка сервера
+		/// </summary>
 		public ICommand StopServerListenerCommand { get; set; }
 		public bool CanStopServerListenerCommand(object e) => Server.Work;
 		public void OnStopServerListenerCommand(object e)
@@ -373,20 +417,14 @@ namespace DataBaseClientServer.ViewModels
 		}
 		#endregion
 		#region StartServerListener
+		/// <summary>
+		/// Запуск сервера
+		/// </summary>
 		public ICommand StartServerListenerCommand { get; set; }
 		public bool CanStartServerListenerCommand(object e) => !Server.Work;
 		public void OnStartServerListenerCommand(object e)
 		{
 			StartServer();
-		}
-		#endregion
-		#region LoadServerCOmmand
-
-		public ICommand LoadServerCommand { get; set; }
-		public bool CanLoadServerCommand(object e) => true;
-		public void OnLoadServerCommand(object e)
-		{
-
 		}
 		#endregion
 		#endregion
@@ -397,7 +435,7 @@ namespace DataBaseClientServer.ViewModels
 		{
 			Log.WriteLine("Start server");
 			Server.Start(Settings.ServerSettings.KeyAES, Settings.ServerSettings.IV_AES);
-
+			Task.Run(() => { SendBroadcast(); });
 			//Task.Run(() =>
 			//{
 			//	Thread.Sleep(1000);
@@ -413,7 +451,11 @@ namespace DataBaseClientServer.ViewModels
 			//	catch (Exception ex) { Console.WriteLine(ex); }
 			//});
 		}
-
+		/// <summary>
+		/// Создание пакета данных с БД
+		/// </summary>
+		/// <param name="dataBasePacket"></param>
+		/// <returns></returns>
 		private DataBasePacket CreateDataBasePacketDataTable(DataBasePacket dataBasePacket)
 		{
 			var dt = PathsToDataBase.FirstOrDefault((i) => i.Path == dataBasePacket.Path);
@@ -432,6 +474,11 @@ namespace DataBaseClientServer.ViewModels
 			Console.WriteLine(dataBasePacket.Data);
 			return dataBasePacket;
 		}
+		/// <summary>
+		/// Создание пакета данных с всей БД
+		/// </summary>
+		/// <param name="dataBasePacket"></param>
+		/// <returns></returns>
 		private DataBasePacket CreateDataBasePacketTables(DataBasePacket dataBasePacket)
 		{
 			if (PathsToDataBase.Count == 0)
@@ -447,6 +494,33 @@ namespace DataBaseClientServer.ViewModels
 			dataBasePacket.Data = PathsToDataBase[0].DataBase.GetTablesDT();
 			dataBasePacket.Type = API.TypeDataBasePacket.GetTables;
 			return dataBasePacket;
+		}
+		/// <summary>
+		/// Отправка пользователям измененую таблицу
+		/// </summary>
+		private void SendBroadcast()
+		{
+			Log.WriteLine($"Start SendBroadcast");
+			while (Server.Work)
+			{
+				List<string> remove = new List<string>();
+				try
+				{
+					foreach (var i in BroadcastTable)
+					{
+						if ((DateTime.Now - i.Value).TotalMilliseconds > 250)
+						{
+							var table = PathsToDataBase[0].DataBase.SendQuery($"SELECT * FROM [{i.Key}]");
+							table.TableName = i.Key;
+							Server.BroadcastSend(new Packet() { TypePacket = TypePacket.UpdateTable, Data = new API.SQLQueryPacket() { Data = table, TableName = i.Key } });
+							remove.Add(i.Key);
+						}
+					}
+				} catch (Exception e){ Log.WriteLine(e); }
+				foreach (var i in remove) BroadcastTable.Remove(i);
+				Thread.Sleep(250);
+			}
+			Log.WriteLine($"End SendBroadcast");
 		}
 		/// <summary>
 		///  Получение ответа от клиента
@@ -486,16 +560,18 @@ namespace DataBaseClientServer.ViewModels
 						Packet.Data = null;
 						Packet.TypePacket = TypePacket.SQLQueryOK;
 						API.Base.SendPacketClient(client, Packet, cipherAES);
-						
+
 						//if (sql_packet.TypeSQLQuery == TypeSQLQuery.Broadcast) Server.BroadcastSend(new Packet() { TypePacket = TypePacket.UpdateTable, Data = new API.SQLQueryPacket() {Data = table, TableName = sql_packet.TableName } }, new List<Client>() { client_auth});
 						//else Server.BroadcastSend(new Packet() { TypePacket = TypePacket.UpdateTable, Data = new API.SQLQueryPacket() { Data = table, TableName = sql_packet.TableName } });
-						Task.Run(() =>
-						{
-							var table = PathsToDataBase[0].DataBase.SendQuery($"SELECT * FROM [{sql_packet.TableName}]");
-							table.TableName = sql_packet.TableName;
-							Thread.Sleep(20);
-							Server.BroadcastSend(new Packet() { TypePacket = TypePacket.UpdateTable, Data = new API.SQLQueryPacket() { Data = table, TableName = sql_packet.TableName } });
-						});
+						if (!BroadcastTable.ContainsKey(sql_packet.TableName)) BroadcastTable.Add(sql_packet.TableName, DateTime.Now);
+						else BroadcastTable[sql_packet.TableName] = DateTime.Now;
+						//Task.Run(() =>
+						//{
+						//	var table = PathsToDataBase[0].DataBase.SendQuery($"SELECT * FROM [{sql_packet.TableName}]");
+						//	table.TableName = sql_packet.TableName;
+						//	Thread.Sleep(20);
+						//	Server.BroadcastSend(new Packet() { TypePacket = TypePacket.UpdateTable, Data = new API.SQLQueryPacket() { Data = table, TableName = sql_packet.TableName } });
+						//});
 					}
 					catch (Exception e)
 					{
@@ -508,6 +584,9 @@ namespace DataBaseClientServer.ViewModels
 			Log.WriteLine(Packet);
 		}
 	}
+	/// <summary>
+	/// Информация о подключенной БД
+	/// </summary>
 	public enum StatusConnectDataBase: int
 	{
 		CanConnect = 3,
@@ -516,6 +595,9 @@ namespace DataBaseClientServer.ViewModels
 		FileIsAlloc = 2,
 		TableIsAlloc = 4,
 	}
+	/// <summary>
+	/// Класс представления подключеной БД
+	/// </summary>
 	public class DataBaseConnectPath : Base.ViewModel.BaseViewModel
 	{
 		private string _Path;

@@ -2,6 +2,9 @@
 
 namespace DataBaseClientServer.Base.Command
 {
+	/// <summary>
+	/// ламбда команда
+	/// </summary>
 	internal class LambdaCommand : Command
 	{
 		private readonly Action<object> _Execute;
