@@ -10,6 +10,10 @@ using System.Diagnostics;
 using System.Windows;
 using DataBaseClientServer.Models.Settings;
 using API.Logging;
+using System.IO.Pipes;
+using System.IO.Pipelines;
+using System.Buffers;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace DataBaseClientServer.Models
 {
@@ -30,7 +34,7 @@ namespace DataBaseClientServer.Models
 		public int TimeOutUpdateKeyAES { get; set; } = 30000; // msc
 		public int TimeOut { get; set; } = 5000; // msc	
 		public int TimeOutConnect { get; set; } = 5000; // msc	
-		public int SizeBuffer { get; set; } = 2048;
+		public int SizeBuffer { get; set; } = 8192;
 		public ClientSerttings ClientSerttings { get; set; }
 
 		private StatusClient _StatusClient = StatusClient.Disconnected;
@@ -139,9 +143,9 @@ namespace DataBaseClientServer.Models
 		{
 			StatusClient = StatusClient.Connecting;
 			IsAuthorization = false;
-			NetworkStream networkStream = _Client.GetStream();
 			cipherAES.AES_KEY = ClientSerttings.KernelSettings.KeyAES;
 			cipherAES.AES_IV = ClientSerttings.KernelSettings.IV_AES;
+			NetworkStream networkStream = _Client.GetStream();
 			API.Base.SendPacketClient(_Client, new API.Packet() { TypePacket = API.TypePacket.UpdateKey }, cipherAES);
 			Task.Run(() => {
 				while(StatusClient != StatusClient.Disconnected)
@@ -186,6 +190,9 @@ namespace DataBaseClientServer.Models
 			});
 
 			API.CipherAES old_cipherAES = cipherAES;
+
+			int ReceiveBytesNeeds = 0;
+			int ReceiveBytesNow = 0;
 			while (_Client.Connected && _Client.Client.Connected)
 			{
 				try
@@ -197,13 +204,19 @@ namespace DataBaseClientServer.Models
 						int numBytesRead = networkStream.Read(myReadBuffer, 0, myReadBuffer.Length);
 						if (numBytesRead == myReadBuffer.Length) allData.AddRange(myReadBuffer);
 						else if (numBytesRead > 0) allData.AddRange(myReadBuffer.Take(numBytesRead));
-					} while (networkStream.DataAvailable);
-
+						ReceiveBytesNow += numBytesRead;
+						Console.WriteLine(ReceiveBytesNow);
+					} while (networkStream.DataAvailable && ReceiveBytesNeeds != 0 && ReceiveBytesNeeds != ReceiveBytesNow);
+					ReceiveBytesNow = 0;
 					API.Packet packet = API.Packet.FromByteArray(allData.ToArray(), cipherAES);
 					Log.WriteLine(packet);
 					LastAnswer = DateTime.Now;
 					switch (packet.TypePacket)
 					{
+						case API.TypePacket.Header:
+							Console.WriteLine($"><>>{packet.Data}");
+							ReceiveBytesNeeds = (int)packet.Data;
+							break;
 						case API.TypePacket.Termination:
 							_Client.Dispose();
 							return;

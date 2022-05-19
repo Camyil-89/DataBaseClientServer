@@ -65,6 +65,7 @@ namespace API
 		ConfirmKey = 6,
 		Authorization = 7,
 		AuthorizationFailed = 8,
+		Header = 18,
 		// NonAuthorization
 
 		// Authorization
@@ -144,6 +145,13 @@ namespace API
 			NetworkStream networkStream = client.GetStream();
 			var byte_packet = Packet.ToByteArray(packet, cipherAES);
 			LogWr(packet, client, byte_packet.Length);
+			if (byte_packet.Length > 8192)
+			{
+				Packet packet1 = new Packet() { TypePacket = TypePacket.Header, Data = byte_packet.Length};
+				var byte_packet1 = Packet.ToByteArray(packet1, cipherAES);
+				LogWr(packet1, client, byte_packet1.Length);
+				networkStream.Write(byte_packet1, 0, byte_packet1.Length);
+			}
 			networkStream.Write(byte_packet, 0, byte_packet.Length);
 		}
 		private static void LogWr(Packet packet, TcpClient client, int size)
