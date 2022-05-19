@@ -26,12 +26,6 @@ namespace DataBaseClientServer.ViewModels
 
 		}
 
-		
-
-		public AdminToolChangeVM()
-		{
-
-		}
 		private string _Title = "Инструмент администратора";
 		public string Title { get => _Title; set => Set(ref _Title, value); }
 
@@ -47,6 +41,10 @@ namespace DataBaseClientServer.ViewModels
 
 		public List<Query> Queries = new List<Query>();
 
+		public AdminToolChangeVM()
+		{
+
+		}
 		/// <summary>
 		/// Вызов при удалении строки
 		/// </summary>

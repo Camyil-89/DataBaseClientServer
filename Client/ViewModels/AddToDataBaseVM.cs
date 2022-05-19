@@ -19,20 +19,7 @@ namespace DataBaseClientServer.ViewModels
 	{
 		public readonly ClientViewModel ClientViewModel;
 		public Client.Views.Windows.AddToDataBaseWindow Window { get; set; }
-		public AddToDataBaseVM(ClientViewModel clientViewModel)
-		{
-			#region Commands
-			CloseCommand = new LambdaCommand(OnCloseCommand, CanCloseCommand);
-			AddRowCommand = new LambdaCommand(OnAddRowCommand, CanAddRowCommand);
-			#endregion
-			ClientViewModel = clientViewModel;
-		}
-
-		public AddToDataBaseVM()
-		{
-			
-		}
-
+	
 		private AddType _AddDBType = AddType.AddBook;
 		public AddType AddDBType { get => _AddDBType; set => Set(ref _AddDBType, value); }
 
@@ -92,6 +79,24 @@ namespace DataBaseClientServer.ViewModels
 		public float Rating { get => _Rating; set => Set(ref _Rating, value); }
 
 		private bool AddRow = false;
+		/// <summary>
+		/// Запуск приложения
+		/// </summary>
+		/// <param name="clientViewModel"></param>
+		public AddToDataBaseVM(ClientViewModel clientViewModel)
+		{
+			#region Commands
+			CloseCommand = new LambdaCommand(OnCloseCommand, CanCloseCommand);
+			AddRowCommand = new LambdaCommand(OnAddRowCommand, CanAddRowCommand);
+			#endregion
+			ClientViewModel = clientViewModel;
+		}
+
+		public AddToDataBaseVM()
+		{
+
+		}
+
 		#endregion
 		/// <summary>
 		/// устанавливает значения

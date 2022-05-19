@@ -77,14 +77,6 @@ namespace DataBaseClientServer.Models.database
 			DataTable dataTable = new DataTable();
 			myDataAdapter.Fill(dataTable);
 			return dataTable;
-			//foreach (DataTable i in myDataSet.Tables)
-			//{
-			//	Console.WriteLine(i);
-			//	foreach (DataRow j in i.Rows)
-			//	{
-			//		Console.WriteLine($"{string.Join(";" ,j.ItemArray)}");
-			//	}
-			//}
 		}
 	}
 }

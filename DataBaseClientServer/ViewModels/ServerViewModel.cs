@@ -285,6 +285,9 @@ namespace DataBaseClientServer.ViewModels
 
 		#region Commands
 		#region RemoveDataBasePathCommand
+		/// <summary>
+		/// Удаление базы данных
+		/// </summary>
 		public ICommand RemoveDataBasePathCommand { get; set; }
 		public bool CanRemoveDataBasePathCommand(object e) => true;
 		public void OnRemoveDataBasePathCommand(object e)

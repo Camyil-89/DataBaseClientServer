@@ -11,9 +11,9 @@
         Width="600"
         WindowStartupLocation="CenterScreen"
 		ResizeMode="CanMinimize">
-    <Window.DataContext>
-        <vm:ServerViewModel/>
-    </Window.DataContext>
+	<Window.DataContext>
+		<vm:ServerViewModel/>
+	</Window.DataContext>
 	<DockPanel>
 		<TabControl>
 			<TabItem Header="Настройки сервера">
@@ -163,10 +163,11 @@
 			<TabItem Header="Клиенты">
 				<Grid>
 					<Grid.ColumnDefinitions>
-						<ColumnDefinition/>
-						<ColumnDefinition/>
+						<ColumnDefinition Width="35*"/>
+						<ColumnDefinition Width="262*"/>
+						<ColumnDefinition Width="297*"/>
 					</Grid.ColumnDefinitions>
-					<Grid Grid.Column="0">
+					<Grid Grid.Column="0" Grid.ColumnSpan="2">
 						<Grid.RowDefinitions>
 							<RowDefinition/>
 							<RowDefinition Height="50"/>
@@ -174,7 +175,7 @@
 						<DockPanel Grid.Row="0">
 							<ListView Margin="5" ItemsSource="{Binding Settings.Clients}" FontSize="14" SelectedItem="{Binding SelectedUser, UpdateSourceTrigger=PropertyChanged}">
 								<ListView.View>
-									
+
 									<GridView>
 										<GridView.Columns>
 											<GridViewColumn Header="ИД" Width="auto">
@@ -200,12 +201,12 @@
 											</GridViewColumn>
 										</GridView.Columns>
 									</GridView>
-									
+
 								</ListView.View>
 							</ListView>
 						</DockPanel>
 					</Grid>
-					<StackPanel Grid.Column="1" Orientation="Vertical">
+					<StackPanel Grid.Column="2" Orientation="Vertical">
 						<ComboBox Grid.Row="3" Grid.Column="1" Margin="5" FontSize="14" Height="25" SelectedIndex="{Binding SelectMode}">
 							<ComboBoxItem Content="Добавлени"/>
 							<ComboBoxItem Content="Удаление"/>

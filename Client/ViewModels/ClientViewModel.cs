@@ -356,10 +356,6 @@ namespace DataBaseClientServer.ViewModels
 			}
 			MessageBox.Show(answer, "Уведомление");
 			BlockAllWorkInDataBase = false;
-			//Console.WriteLine("---------");
-			//foreach (DataRow i in AdminToolChangeVM.Table.Table.Rows) Console.WriteLine($"{string.Join(";", i.ItemArray)}");
-			//Console.WriteLine("---------");
-			//foreach (DataRow i in SelectedTableDataBase.Table.Rows) Console.WriteLine($"{string.Join(";", i.ItemArray)}");
 		}
 		#endregion
 		/// <summary>
