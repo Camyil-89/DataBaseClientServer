@@ -45,6 +45,8 @@
     <Compile Include="API.cs" />
     <Compile Include="Excepcions.cs" />
     <Compile Include="Log.cs" />
+    <Compile Include="NetFind\Finder.cs" />
+    <Compile Include="NetFind\Packet.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ProviderXML.cs" />
   </ItemGroup>

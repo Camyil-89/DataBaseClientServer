@@ -164,6 +164,7 @@ namespace DataBaseClientServer.ViewModels
 			AddDBBookCommand = new LambdaCommand(OnAddDBBookCommand, CanAddDBBookCommand);
 			DeleteFromDBCommand = new LambdaCommand(OnDeleteFromDBCommand, CanDeleteFromDBCommand);
 			ChangeAdminToolCommnad = new LambdaCommand(OnChangeAdminToolCommnad, CanChangeAdminToolCommnad);
+			FindServerCommand = new LambdaCommand(OnFindServerCommand, CanFindServerCommand);
 			SetSettingsClient();
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
@@ -280,6 +281,36 @@ namespace DataBaseClientServer.ViewModels
 		#endregion
 
 		#region Commands
+		#region FindServerCommand
+
+		bool BlockFindServer = false;
+		public ICommand FindServerCommand { get; set; }
+		public bool CanFindServerCommand(object e) => Client != null && Client.StatusClient == StatusClient.Disconnected;
+		public void OnFindServerCommand(object e)
+		{
+			if (BlockFindServer)
+				return;
+			BlockFindServer = true;
+			Task.Run(() =>
+			{
+				try
+				{
+					API.NetFind.Client client = new API.NetFind.Client();
+					var ip = client.StartFind(ClientSerttings.ClientConnect.Port + 10, 5000, "ServerDataBase");
+					if (ip == null)
+					{
+						MessageBox.Show("Не удалось найти сервер!", "Информация");
+						return;
+					}
+					ClientSerttings.ClientConnect.IPAddressServer = ip.GetAddressBytes();
+					BlockFindServer = false;
+				}
+				catch (Exception er) { MessageBox.Show($"Произошла ошибка!\n{er}"); }
+
+			});
+
+		}
+		#endregion
 		#region ChangeAdminToolCommnad
 		/// <summary>
 		/// Открытие окна редактирования БД для администратора и отправка на сервер данных

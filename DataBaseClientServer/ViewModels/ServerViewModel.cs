@@ -149,11 +149,14 @@ namespace DataBaseClientServer.ViewModels
 			}
 		}
 		private Client _SelectedUser;
-		public Client SelectedUser { get => _SelectedUser; set 
+		public Client SelectedUser
+		{
+			get => _SelectedUser; set
 			{
 				Set(ref _SelectedUser, value);
 				if (SelectMode != 0) SelectUser = Settings.Clients.IndexOf(SelectedUser);
-			} }
+			}
+		}
 
 		private string _UserLogin = "";
 		public string UserLogin { get => _UserLogin; set => Set(ref _UserLogin, value); }
@@ -202,16 +205,14 @@ namespace DataBaseClientServer.ViewModels
 			ProviderXML.KEY_AES = KEY_LOAD;
 
 			Server.CallAnswer += Answer;
-			foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
-			{
-				if (ip.AddressFamily == AddressFamily.InterNetwork)
-				{
-					Server.IPAddress = ip;
-					break;
-				}
-			}
+			Server.IPAddress = API.NetFind.Utility.GetLocalIPAddress();
 			App.Current.Exit += Current_Exit;
 			Task.Run(() => { LoadXML(); });
+			Task.Run(() =>
+			{
+				API.NetFind.Server server = new API.NetFind.Server();
+				server.Start(Server.Port + 10, "ServerDataBase");
+			});
 		}
 		/// <summary>
 		/// Выход из программы
@@ -244,7 +245,8 @@ namespace DataBaseClientServer.ViewModels
 			}
 			catch (Exception ex) { Settings.Clients = new ObservableCollection<Client>(); Log.WriteLine(ex); }
 			Log.WriteLine("LoadXML: true");
-			Task.Run(() => {
+			Task.Run(() =>
+			{
 				try
 				{
 					foreach (var i in Settings.ServerSettings.PathsToDataBase)
@@ -256,7 +258,8 @@ namespace DataBaseClientServer.ViewModels
 						if (x.DataBase.Connect()) x.IsEnableStatus = StatusConnectDataBase.ConnectAccess;
 						else x.IsEnableStatus = StatusConnectDataBase.NotWork;
 					}
-				} catch (Exception e) { Log.WriteLine(e); }
+				}
+				catch (Exception e) { Log.WriteLine(e); }
 				if (Settings.ServerSettings.AutoStartServer) Task.Run(() => { StartServer(); });
 			});
 		}
@@ -352,7 +355,7 @@ namespace DataBaseClientServer.ViewModels
 					ChangeUser();
 					break;
 			}
-			
+
 		}
 		/// <summary>
 		/// Изменение данных у пользователя
@@ -389,13 +392,16 @@ namespace DataBaseClientServer.ViewModels
 			var find = Settings.Clients.FirstOrDefault((i) => i.Login == UserLogin);
 			if (find == null)
 			{
-				Settings.Clients.Add(new Client() { Login = UserLogin,
+				Settings.Clients.Add(new Client()
+				{
+					Login = UserLogin,
 					Password = UserPassword,
 					Name = UserName,
 					Surname = UserSurname,
-					Patronymic = UserPatronymic, 
+					Patronymic = UserPatronymic,
 					AccessLevel = _AccessLevelUser,
-					UID = Client.GenerateUIDClient(Settings.Clients) });
+					UID = Client.GenerateUIDClient(Settings.Clients)
+				});
 				UserLogin = "";
 				UserPassword = "";
 				AccessLevelUser = -1;
@@ -519,7 +525,8 @@ namespace DataBaseClientServer.ViewModels
 							remove.Add(i.Key);
 						}
 					}
-				} catch (Exception e){ Log.WriteLine(e); }
+				}
+				catch (Exception e) { Log.WriteLine(e); }
 				foreach (var i in remove) BroadcastTable.Remove(i);
 				Thread.Sleep(250);
 			}
@@ -590,7 +597,7 @@ namespace DataBaseClientServer.ViewModels
 	/// <summary>
 	/// Информация о подключенной БД
 	/// </summary>
-	public enum StatusConnectDataBase: int
+	public enum StatusConnectDataBase : int
 	{
 		CanConnect = 3,
 		ConnectAccess = 1,
@@ -604,12 +611,15 @@ namespace DataBaseClientServer.ViewModels
 	public class DataBaseConnectPath : Base.ViewModel.BaseViewModel
 	{
 		private string _Path;
-		public string Path { get => _Path; 
+		public string Path
+		{
+			get => _Path;
 			set
 			{
 				Set(ref _Path, value);
 				DataBase.Path = Path;
-			} }
+			}
+		}
 
 		public DataBase DataBase { get; set; } = new DataBase();
 
@@ -640,12 +650,16 @@ namespace DataBaseClientServer.ViewModels
 			}
 		}
 
-		public string ShortPath { get {
+		public string ShortPath
+		{
+			get
+			{
 				var split_list = Path.Split('\\');
 				if (split_list.Length <= 2) return Path;
 				split_list = split_list.Skip(split_list.Length - 2).ToArray();
 				return String.Join("\\", split_list);
-			} }
+			}
+		}
 		private Brush _Foreground;
 		public Brush Foreground { get => _Foreground; set => Set(ref _Foreground, value); }
 	}
