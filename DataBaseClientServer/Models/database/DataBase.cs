@@ -6,11 +6,78 @@ using System.Data.OleDb;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using API;
 using API.Logging;
+using MySql.Data.MySqlClient;
 
 namespace DataBaseClientServer.Models.database
 {
-	public class DataBase
+	public interface IDataBase
+	{
+		bool Connect();
+		ObservableCollection<API.TableDataBase> GetTablesDT();
+		List<string> GetTables();
+		DataTable SendQuery(string query);
+		void SetPath(string path);
+	}
+	public class SQLDataBase : IDataBase
+	{
+		private static MySqlConnection _connection;
+		public const string ConnectionString = "server=localhost;port=3306;username=webapi;password=!1N7XmccClyGXMOb;database=библиотечный фонд";
+		public bool Connect()
+		{
+			try
+			{
+				Log.WriteLine($"connecting...");
+				_connection = new MySqlConnection(ConnectionString);
+				_connection.Open();
+				Log.WriteLine($"connect");
+				return true;
+			}
+			catch { return false; }
+		}
+
+		public List<string> GetTables()
+		{
+			List<string> tables = new List<string>();
+			DataTable dt = _connection.GetSchema("Tables");
+			foreach (DataRow row in dt.Rows)
+			{
+				string tablename = (string)row[2];
+				tables.Add(tablename);
+			}
+			return tables;
+		}
+
+		public ObservableCollection<TableDataBase> GetTablesDT()
+		{
+			ObservableCollection<API.TableDataBase> tablesDataBase = new ObservableCollection<API.TableDataBase>();
+			var list = GetTables();
+			foreach (var i in list)
+			{
+				var dt = SendQuery($"SELECT * FROM `{i}`");
+				dt.TableName = i.ToLower();
+				tablesDataBase.Add(new API.TableDataBase() { Table = dt });
+			}
+			return tablesDataBase;
+		}
+		public DataTable SendQuery(string query)
+		{
+			var _query = query.Replace("[", "`").Replace("]", "`").Replace("Тип книги", "тип книги");
+			MySqlCommand command = new MySqlCommand(_query, _connection);
+			MySqlDataAdapter dtb = new MySqlDataAdapter();
+			dtb.SelectCommand = command;
+			DataTable dtable = new DataTable();
+			dtb.Fill(dtable);
+			return dtable;
+		}
+
+		public void SetPath(string path)
+		{
+			
+		}
+	}
+	public class DataBase: IDataBase
 	{
 		public string Path { get; set; } = "Database.mdb";
 		public string Provider = "Provider=Microsoft.Jet.OLEDB.4.0";
@@ -77,6 +144,11 @@ namespace DataBaseClientServer.Models.database
 			DataTable dataTable = new DataTable();
 			myDataAdapter.Fill(dataTable);
 			return dataTable;
+		}
+
+		public void SetPath(string path)
+		{
+			Path = path;
 		}
 	}
 }

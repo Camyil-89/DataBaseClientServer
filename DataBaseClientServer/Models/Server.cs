@@ -33,7 +33,7 @@ namespace DataBaseClientServer.Models
 		public int SizeBuffer = 65000;
 
 
-		public DataBase AccessDataBase = new DataBase();
+		public IDataBase AccessDataBase = new DataBase();
 
 		public ServerViewModel ServerViewModel { get; set; }
 

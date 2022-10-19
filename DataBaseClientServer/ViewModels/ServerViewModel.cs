@@ -617,11 +617,11 @@ namespace DataBaseClientServer.ViewModels
 			set
 			{
 				Set(ref _Path, value);
-				DataBase.Path = Path;
+				DataBase.SetPath(Path);
 			}
 		}
 
-		public DataBase DataBase { get; set; } = new DataBase();
+		public IDataBase DataBase { get; set; } = new SQLDataBase();//new DataBase();
 
 		private StatusConnectDataBase _IsEnableStatus;
 		public StatusConnectDataBase IsEnableStatus

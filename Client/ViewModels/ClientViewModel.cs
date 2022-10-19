@@ -197,7 +197,7 @@ namespace DataBaseClientServer.ViewModels
 		/// <returns></returns>
 		public API.TableDataBase GetTableFromName(string name)
 		{
-			return TablesDataBase.FirstOrDefault((i) => i.Table.TableName == name);
+			return TablesDataBase.FirstOrDefault((i) => i.Table.TableName.ToLower() == name.ToLower());
 		}
 		/// <summary>
 		/// Завершение работы 
