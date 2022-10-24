@@ -12,6 +12,9 @@ using MySql.Data.MySqlClient;
 
 namespace DataBaseClientServer.Models.database
 {
+	/// <summary>
+	/// интерфейс для взаимодействия с базой данных (так как их 2 (sql и access))
+	/// </summary>
 	public interface IDataBase
 	{
 		bool Connect();
@@ -20,10 +23,17 @@ namespace DataBaseClientServer.Models.database
 		DataTable SendQuery(string query);
 		void SetPath(string path);
 	}
+	/// <summary>
+	/// класс для взаимодействия с базой sql
+	/// </summary>
 	public class SQLDataBase : IDataBase
 	{
 		private static MySqlConnection _connection;
 		public const string ConnectionString = "server=localhost;port=3306;username=webapi;password=!1N7XmccClyGXMOb;database=библиотечный фонд";
+		/// <summary>
+		/// Подключение к phpadmin
+		/// </summary>
+		/// <returns></returns>
 		public bool Connect()
 		{
 			try
@@ -36,7 +46,10 @@ namespace DataBaseClientServer.Models.database
 			}
 			catch { return false; }
 		}
-
+		/// <summary>
+		/// Получение таблиц
+		/// </summary>
+		/// <returns></returns>
 		public List<string> GetTables()
 		{
 			List<string> tables = new List<string>();
@@ -48,7 +61,10 @@ namespace DataBaseClientServer.Models.database
 			}
 			return tables;
 		}
-
+		/// <summary>
+		/// Получение таблиц в определенном формате
+		/// </summary>
+		/// <returns></returns>
 		public ObservableCollection<TableDataBase> GetTablesDT()
 		{
 			ObservableCollection<API.TableDataBase> tablesDataBase = new ObservableCollection<API.TableDataBase>();
@@ -61,6 +77,11 @@ namespace DataBaseClientServer.Models.database
 			}
 			return tablesDataBase;
 		}
+		/// <summary>
+		/// отправка запросов
+		/// </summary>
+		/// <param name="query"></param>
+		/// <returns></returns>
 		public DataTable SendQuery(string query)
 		{
 			var _query = query.Replace("[", "`").Replace("]", "`").Replace("Тип книги", "тип книги");
