@@ -478,29 +478,43 @@ namespace DataBaseClientServer.ViewModels
 			AddToDataBaseVM.FillProperty();
 			window.DataContext = AddToDataBaseVM;
 			window.ShowDialog();
-			string sql_query = AddToDataBaseVM.GetSQLQuery();
-			if (sql_query != null && sql_query != "" && sql_query != "exit")
+			var sql_list = AddToDataBaseVM.GetSQLQuery();
+			int Is_OK = 0;
+			if (sql_list != null && sql_list.Count > 0)
 			{
 				BlockAllWorkInDataBase = true;
 				try
 				{
-					var dict = AddToDataBaseVM.GetDataRow();
-					var packet = Client.SendPacketAndWaitResponse(GetPacketSQLQuery(sql_query, dict["!TableName!"].ToString(), API.TypeSQLQuery.BroadcastMe), 1).Packets[0];
-					Console.WriteLine(packet);
-					if (packet.TypePacket == API.TypePacket.SQLQueryOK)
+					foreach (var sql_query in sql_list)
 					{
-						//var table = GetTableFromName(dict["!TableName!"].ToString());
-						//dict.Remove("!TableName!");
-						//var row = table.Table.NewRow();
-						//foreach (var i in dict) row[i.Key] = i.Value;
-						//table.Table.Rows.Add(row);
-						MessageBox.Show($"Транзакция успешно выполнена!", "Уведомление");
+						var dict = AddToDataBaseVM.GetDataRow();
+						var packet = Client.SendPacketAndWaitResponse(GetPacketSQLQuery(sql_query, dict["!TableName!"].ToString(), API.TypeSQLQuery.BroadcastMe), 1).Packets[0];
+						Console.WriteLine(packet);
+						if (packet.TypePacket == API.TypePacket.SQLQueryOK)
+						{
+							//var table = GetTableFromName(dict["!TableName!"].ToString());
+							//dict.Remove("!TableName!");
+							//var row = table.Table.NewRow();
+							//foreach (var i in dict) row[i.Key] = i.Value;
+							//table.Table.Rows.Add(row);
+							Is_OK++;
+						}
+						else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) MessageBox.Show($"У вас недостаточно прав для выполнения данной операции!");
+						else if (packet.TypePacket == API.TypePacket.SQLQueryError) MessageBox.Show($"Произошла ошибка на стороне сервера!\n{packet.Data}");
+						else MessageBox.Show($"Сервер вернул что то непонятное:(", "Ошибка");
 					}
-					else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) MessageBox.Show($"У вас недостаточно прав для выполнения данной операции!");
-					else if (packet.TypePacket == API.TypePacket.SQLQueryError) MessageBox.Show($"Произошла ошибка на стороне сервера!\n{packet.Data}");
-					else MessageBox.Show($"Сервер вернул что то непонятное:(", "Ошибка");
 				}
 				catch (Exception e) { MessageBox.Show($"Произошла непредвиденная ошибка!\n{e}", "Ошибка"); }
+				if (Is_OK == sql_list.Count)
+				{
+					Task.Run(() =>
+					{
+						ConnectDataBase();
+					});
+					MessageBox.Show($"Транзакция успешно выполнена!", "Уведомление");
+				}
+				else
+					MessageBox.Show($"Транзакция не выполнена!", "Уведомление");
 			}
 			BlockAllWorkInDataBase = false;
 		}

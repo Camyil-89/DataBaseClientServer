@@ -192,6 +192,7 @@ namespace DataBaseClientServer.ViewModels
 		public ServerViewModel()
 		{
 			BindingOperations.EnableCollectionSynchronization(Server.tcpClients, _lock); // доступ из всех потоков
+			BindingOperations.EnableCollectionSynchronization(PathsToDataBase, _lock); // доступ из всех потоков
 			Log.WriteLine("ServerViewModel");
 			#region Commands
 			StartServerListenerCommand = new LambdaCommand(OnStartServerListenerCommand, CanStartServerListenerCommand);

@@ -60,12 +60,12 @@
 									<DataTemplate>
 										<Grid>
 											<Grid.ColumnDefinitions>
-												<ColumnDefinition Width="160"/>
-												<ColumnDefinition Width="65"/>
+												<!--<ColumnDefinition Width="160"/>
+												<ColumnDefinition Width="65"/>-->
 												<ColumnDefinition/>
 											</Grid.ColumnDefinitions>
 											<TextBlock Grid.Column="0" Text="{Binding Table.TableName}" FontSize="14"/>
-											<TextBlock Grid.Column="2" Text="{Binding Status}" FontSize="14" HorizontalAlignment="Center"/>
+											<!--<TextBlock Grid.Column="2" Text="{Binding Status}" FontSize="14" HorizontalAlignment="Center"/>-->
 										</Grid>
 									</DataTemplate>
 								</ListView.ItemTemplate>
