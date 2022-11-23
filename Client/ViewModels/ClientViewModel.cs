@@ -440,7 +440,7 @@ namespace DataBaseClientServer.ViewModels
 				try
 				{
 					var packet = Client.SendPacketAndWaitResponse(GetPacketSQLQuery($"DELETE FROM [{SelectedTableDataBase.Table.TableName}]" +
-						$" WHERE {SelectedTableDataBase.Table.Columns[0].ColumnName} = {SelectedTableDataBase.Table.Rows[IndexSelectRow].ItemArray[0]}", SelectedTableDataBase.Table.TableName, API.TypeSQLQuery.BroadcastMe), 1).Packets[0];
+						$" WHERE `{SelectedTableDataBase.Table.Columns[0].ColumnName}` = {SelectedTableDataBase.Table.Rows[IndexSelectRow].ItemArray[0]}", SelectedTableDataBase.Table.TableName, API.TypeSQLQuery.BroadcastMe), 1).Packets[0];
 					Console.WriteLine(packet);
 					if (packet.TypePacket == API.TypePacket.SQLQueryOK)
 					{
