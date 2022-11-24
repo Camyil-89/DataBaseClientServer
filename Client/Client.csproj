@@ -101,11 +101,15 @@
     <Compile Include="ViewModels\AddToDataBaseVM.cs" />
     <Compile Include="ViewModels\AdminToolChangeVM.cs" />
     <Compile Include="ViewModels\ClientViewModel.cs" />
+    <Compile Include="ViewModels\SqlQueryWindowVM.cs" />
     <Compile Include="Views\Windows\AddToDataBaseWindow.xaml.cs">
       <DependentUpon>AddToDataBaseWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Windows\AdminToolChangeWindow.xaml.cs">
       <DependentUpon>AdminToolChangeWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Windows\SqlQueryWindow.xaml.cs">
+      <DependentUpon>SqlQueryWindow.xaml</DependentUpon>
     </Compile>
     <Page Include="ClientWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -127,6 +131,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Windows\AdminToolChangeWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Windows\SqlQueryWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

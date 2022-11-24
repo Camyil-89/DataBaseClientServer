@@ -76,6 +76,7 @@
 										<MenuItem Header="Добавить книгу" Command="{Binding AddDBBookCommand}"/>
 									</MenuItem>
 									<MenuItem Header="Изменить" IsEnabled="{Binding IsAccessLevelAdmin}" Command="{Binding ChangeAdminToolCommnad}"/>
+                                    <MenuItem Header="Запрос" IsEnabled="{Binding IsAccessLevelAdmin}" Command="{Binding SqlQueryWindowCommand}"/>
 									<MenuItem Header="Удалить" IsEnabled="{Binding WriteToTable}" Command="{Binding DeleteFromDBCommand}"/>
 									<MenuItem Header="Обновить" Command="{Binding ConnectDataBaseCommand}"/>
 								</Menu>

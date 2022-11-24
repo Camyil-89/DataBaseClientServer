@@ -165,6 +165,7 @@ namespace DataBaseClientServer.ViewModels
 			DeleteFromDBCommand = new LambdaCommand(OnDeleteFromDBCommand, CanDeleteFromDBCommand);
 			ChangeAdminToolCommnad = new LambdaCommand(OnChangeAdminToolCommnad, CanChangeAdminToolCommnad);
 			FindServerCommand = new LambdaCommand(OnFindServerCommand, CanFindServerCommand);
+			SqlQueryWindowCommand = new LambdaCommand(OnSqlQueryWindowCommandExecuted, CanSqlQueryWindowCommandExecute);
 			SetSettingsClient();
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
@@ -415,6 +416,20 @@ namespace DataBaseClientServer.ViewModels
 			}
 			return max_index;
 		}
+
+		#region SqlQueryWindowCommand: Description
+		//SqlQueryWindowCommand = new LambdaCommand(OnSqlQueryWindowCommandExecuted, CanSqlQueryWindowCommandExecute);
+		public ICommand SqlQueryWindowCommand { get; set; }
+		private bool CanSqlQueryWindowCommandExecute(object e) => true;
+		private void OnSqlQueryWindowCommandExecuted(object e)
+		{
+			SqlQueryWindow window = new SqlQueryWindow();
+			SqlQueryWindowVM vm = new SqlQueryWindowVM();
+			vm.Client = Client;
+			window.DataContext = vm;
+			window.ShowDialog();
+		}
+		#endregion
 		#region DeleteFromDBCommand
 		/// <summary>
 		/// Удаление из БД строки

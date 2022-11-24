@@ -567,8 +567,7 @@ namespace DataBaseClientServer.ViewModels
 					try
 					{
 						var sql_packet = (API.SQLQueryPacket)Packet.Data;
-						PathsToDataBase[0].DataBase.SendQuery(sql_packet.Data.ToString());
-						Packet.Data = null;
+						Packet.Data = PathsToDataBase[0].DataBase.SendQuery(sql_packet.Data.ToString()); ;
 						Packet.TypePacket = TypePacket.SQLQueryOK;
 						API.Base.SendPacketClient(client, Packet, cipherAES);
 

@@ -23,6 +23,13 @@ namespace DataBaseClientServer.ViewModels
 		private AddType _AddDBType = AddType.AddBook;
 		public AddType AddDBType { get => _AddDBType; set => Set(ref _AddDBType, value); }
 
+
+		#region GenreText: Description
+		/// <summary>Description</summary>
+		private string _GenreText;
+		/// <summary>Description</summary>
+		public string GenreText { get => _GenreText; set => Set(ref _GenreText, value); }
+		#endregion
 		private string _Title;
 		public string Title { 
 			get 
@@ -114,7 +121,7 @@ namespace DataBaseClientServer.ViewModels
 					ComboBoxAuthor.Clear();
 					foreach (DataRow i in table.Table.Rows) ComboBoxAuthor.Add(i);
 
-					table = ClientViewModel.GetTableFromName("Жанры");
+					table = ClientViewModel.GetTableFromName("Жанр книг");
 					ComboBoxGenre.Clear();
 					foreach (DataRow i in table.Table.Rows) ComboBoxGenre.Add(i);
 
@@ -140,7 +147,8 @@ namespace DataBaseClientServer.ViewModels
 					return NameBook != string.Empty &&
 					Rating >= 0 &&
 					SelectedAuthor != null &&
-					SelectedGenre != null &&
+					!string.IsNullOrEmpty(GenreText) &&
+					//SelectedGenre != null &&
 					SelectedTypeBook != null;
 				default:
 					return false;
@@ -165,7 +173,8 @@ namespace DataBaseClientServer.ViewModels
 						{ "!TableName!", "Книги"},
 						{ "ID_книга", ClientViewModel.GetID(dataTable)},
 						{ "Название", NameBook},
-						{ "ID_жанр", SelectedGenre.ItemArray[0]},
+						//{ "ID_жанр", SelectedGenre.ItemArray[0]},
+						{ "ID_жанр", GenreText},
 						{ "Рейтинг", Rating},
 						{ "ID_автор", SelectedAuthor.ItemArray[0]},
 						{ "ID_тип", SelectedTypeBook.ItemArray[0]},
@@ -186,11 +195,12 @@ namespace DataBaseClientServer.ViewModels
 			{
 				case AddType.AddBook:
 					DataTable dataTable = ClientViewModel.GetTableFromName("Книги").Table;
+					var id = ClientViewModel.GetID(dataTable);
 					//sql = $"INSERT INTO Книги(ID_книга, Название, ID_жанр, Рейтинг, ID_автор, ID_тип) " +
 					//	$"VALUES({ClientViewModel.GetID(dataTable)}, '{NameBook}', {SelectedGenre.ItemArray[0]}, {Rating}, {SelectedAuthor.ItemArray[0]}, {SelectedTypeBook.ItemArray[0]});";
 					sqls.Add($"INSERT INTO Книги(ID_книга, Название, Рейтинг, ID_автор, ID_тип) " +
-						$"VALUES({ClientViewModel.GetID(dataTable)}, '{NameBook}', {Rating}, {SelectedAuthor.ItemArray[0]}, {SelectedTypeBook.ItemArray[0]});");
-					sqls.Add($"INSERT INTO `жанр книг` (`ID_жанр_книги`, `ID_книга`, `ID_жанра`) VALUES (NULL, {ClientViewModel.GetID(dataTable)}, {SelectedGenre.ItemArray[0]});");
+						$"VALUES({id}, '{NameBook}', {Rating}, {SelectedAuthor.ItemArray[0]}, {SelectedTypeBook.ItemArray[0]});");
+					sqls.Add($"INSERT INTO `жанр книг` (`ID_жанр`, `ID_книга`, `Описание`) VALUES (NULL, {id}, '{GenreText}');");
 					break;
 			}
 			AddRow = false;
