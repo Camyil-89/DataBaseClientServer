@@ -710,7 +710,6 @@ namespace DataBaseClientServer.ViewModels
 			switch (Packet.TypePacket)
 			{
 				case API.TypePacket.UpdateTable:
-					Console.WriteLine("API.TypePacket.UpdateTable");
 					API.SQLQueryPacket queryPacket = (API.SQLQueryPacket)Packet.Data;
 					var table = GetTableFromName(queryPacket.TableName);
 					table.Table = (DataTable)queryPacket.Data;
