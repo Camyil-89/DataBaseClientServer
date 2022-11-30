@@ -95,6 +95,13 @@ namespace DataBaseClientServer.ViewModels
 		public int PingToServer { get => _PingToServer; set => Set(ref _PingToServer, value); }
 		#endregion
 		#region база данных
+
+		#region SqlQueryText: Description
+		/// <summary>Description</summary>
+		private string _SqlQueryText = "";
+		/// <summary>Description</summary>
+		public string SqlQueryText { get => _SqlQueryText; set => Set(ref _SqlQueryText, value); }
+		#endregion
 		private bool _IsConnectDataBase = false;
 		public bool IsConnectDataBase { get => _IsConnectDataBase; set => Set(ref _IsConnectDataBase, value); }
 
@@ -102,7 +109,22 @@ namespace DataBaseClientServer.ViewModels
 		public ObservableCollection<API.TableDataBase> TablesDataBase { get => _TablesDataBase; set => Set(ref _TablesDataBase, value); }
 
 		private API.TableDataBase _SelectedTableDataBase;
-		public API.TableDataBase SelectedTableDataBase { get => _SelectedTableDataBase; set => Set(ref _SelectedTableDataBase, value); }
+		public API.TableDataBase SelectedTableDataBase
+		{
+			get => _SelectedTableDataBase; set
+			{
+				if (Find)
+				{
+					var packet = (API.DataBasePacket)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.ConnectDataBase }, 1).Packets[0].Data;
+					var x = (ObservableCollection<API.TableDataBase>)packet.Data;
+					_SelectedTableDataBase.Table = x.FirstOrDefault((i) => i.Table.TableName == SelectedTableDataBase.Table.TableName).Table;
+				}
+				Set(ref _SelectedTableDataBase, value);
+				Find = false;
+			}
+		}
+
+		private bool Find = false;
 
 		private DataTable _Books = null;
 		public DataTable Books { get => _Books; set => Set(ref _Books, value); }
@@ -166,6 +188,7 @@ namespace DataBaseClientServer.ViewModels
 			ChangeAdminToolCommnad = new LambdaCommand(OnChangeAdminToolCommnad, CanChangeAdminToolCommnad);
 			FindServerCommand = new LambdaCommand(OnFindServerCommand, CanFindServerCommand);
 			SqlQueryWindowCommand = new LambdaCommand(OnSqlQueryWindowCommandExecuted, CanSqlQueryWindowCommandExecute);
+			FindSqlCommand = new LambdaCommand(OnFindSqlCommandExecuted, CanFindSqlCommandExecute);
 			SetSettingsClient();
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
@@ -468,6 +491,33 @@ namespace DataBaseClientServer.ViewModels
 				catch (Exception er) { MessageBox.Show($"Произошла непредвиденная ошибка!\n{er}", "Ошибка"); }
 			}
 			BlockAllWorkInDataBase = false;
+		}
+		#endregion
+
+		#region FindSqlCommand: Description
+		//FindSqlCommand = new LambdaCommand(OnFindSqlCommandExecuted, CanFindSqlCommandExecute);
+		public ICommand FindSqlCommand { get; set; }
+		private bool CanFindSqlCommandExecute(object e) => true;
+		private void OnFindSqlCommandExecuted(object e)
+		{
+			try
+			{
+				var packet = (API.DataBasePacket)Client.SendPacketAndWaitResponse(new API.Packet() { TypePacket = API.TypePacket.ConnectDataBase }, 1).Packets[0].Data;
+				var x = (ObservableCollection<API.TableDataBase>)packet.Data;
+				if (packet.Info == API.InfoDataBasePacket.OK)
+				{
+					Find = true;
+					SelectedTableDataBase.Table = x.FirstOrDefault((i) => i.Table.TableName == SelectedTableDataBase.Table.TableName).Table;
+					List<DataRow> removes = new List<DataRow>();
+					foreach (DataRow i in SelectedTableDataBase.Table.Rows)
+						if (!string.Join("", i.ItemArray).Contains(SqlQueryText))
+							removes.Add(i);
+					foreach (var i in removes)
+						SelectedTableDataBase.Table.Rows.Remove(i);
+					OnPropertyChanged(nameof(SelectedTableDataBase));
+				}
+			}
+			catch (Exception er) { MessageBox.Show($"Произошла непредвиденная ошибка!\n{er}", "Ошибка"); Console.WriteLine(er); }
 		}
 		#endregion
 		#region AddDBBookCommand
