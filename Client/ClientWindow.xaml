@@ -79,6 +79,7 @@
                                     </Grid.RowDefinitions>
                                     <Menu DockPanel.Dock="Top" Grid.Row="0">
                                         <MenuItem Header="Добавить" IsEnabled="{Binding WriteToTable}">
+                                            <MenuItem Header="Добавить" Command="{Binding AddParseCommand}"/>
                                             <MenuItem Header="Добавить книгу" Command="{Binding AddDBBookCommand}"/>
                                         </MenuItem>
                                         <MenuItem Header="Изменить" IsEnabled="{Binding IsAccessLevelAdmin}" Command="{Binding ChangeAdminToolCommnad}"/>

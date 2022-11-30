@@ -189,6 +189,7 @@ namespace DataBaseClientServer.ViewModels
 			FindServerCommand = new LambdaCommand(OnFindServerCommand, CanFindServerCommand);
 			SqlQueryWindowCommand = new LambdaCommand(OnSqlQueryWindowCommandExecuted, CanSqlQueryWindowCommandExecute);
 			FindSqlCommand = new LambdaCommand(OnFindSqlCommandExecuted, CanFindSqlCommandExecute);
+			AddParseCommand = new LambdaCommand(OnAddParseCommandExecuted, CanAddParseCommandExecute);
 			SetSettingsClient();
 			App.Current.Exit += Current_Exit;
 			Console.WriteLine("Start");
@@ -413,6 +414,38 @@ namespace DataBaseClientServer.ViewModels
 			BlockAllWorkInDataBase = false;
 		}
 		#endregion
+
+
+		#region AddParseCommand: Description
+		//AddParseCommand = new LambdaCommand(OnAddParseCommandExecuted, CanAddParseCommandExecute);
+		public ICommand AddParseCommand { get; set; }
+		private bool CanAddParseCommandExecute(object e) => SelectedTableDataBase != null && SelectedTableDataBase.Table != null;
+		private void OnAddParseCommandExecuted(object e)
+		{
+			AddParserWindow window = new AddParserWindow();
+			AddParserWindowVM vm = new AddParserWindowVM();
+			vm.Table = SelectedTableDataBase.Table;
+			vm.Window = window;
+			vm.Client = Client;
+			window.DataContext = vm;
+			vm.Generate();
+			window.ShowDialog();
+			if (vm.AddToDataBase)
+			{
+				//try
+				//{
+				//	var packet = Client.SendPacketAndWaitResponse(GetPacketSQLQuery($"SELECT * FROM `{SelectedTableDataBase.Table.TableName}`", SelectedTableDataBase.Table.TableName), 1).Packets[0];
+				//	if (packet.TypePacket == API.TypePacket.SQLQueryOK)
+				//		SelectedTableDataBase.Table = (DataTable)packet.Data;
+				//	else if (packet.TypePacket == API.TypePacket.SQLQueryDenay) MessageBox.Show($"У вас недостаточно прав для выполнения данной операции!");
+				//	else if (packet.TypePacket == API.TypePacket.SQLQueryError) MessageBox.Show($"Произошла ошибка на стороне сервера!\n{packet.Data}");
+				//	else MessageBox.Show($"Сервер вернул что то непонятное:(", "Ошибка");
+				//}
+				//catch (Exception ex) { Console.WriteLine(ex); }
+			}
+		}
+		#endregion
+
 		/// <summary>
 		/// Создание пакета данных для отправки sql запроса
 		/// </summary>
@@ -677,6 +710,7 @@ namespace DataBaseClientServer.ViewModels
 			switch (Packet.TypePacket)
 			{
 				case API.TypePacket.UpdateTable:
+					Console.WriteLine("API.TypePacket.UpdateTable");
 					API.SQLQueryPacket queryPacket = (API.SQLQueryPacket)Packet.Data;
 					var table = GetTableFromName(queryPacket.TableName);
 					table.Table = (DataTable)queryPacket.Data;

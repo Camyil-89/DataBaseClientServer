@@ -98,10 +98,14 @@
     </ApplicationDefinition>
     <Compile Include="Models\Client.cs" />
     <Compile Include="Models\Settings\ClientSerttings.cs" />
+    <Compile Include="ViewModels\AddParserWindowVM.cs" />
     <Compile Include="ViewModels\AddToDataBaseVM.cs" />
     <Compile Include="ViewModels\AdminToolChangeVM.cs" />
     <Compile Include="ViewModels\ClientViewModel.cs" />
     <Compile Include="ViewModels\SqlQueryWindowVM.cs" />
+    <Compile Include="Views\Windows\AddParserWindow.xaml.cs">
+      <DependentUpon>AddParserWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\Windows\AddToDataBaseWindow.xaml.cs">
       <DependentUpon>AddToDataBaseWindow.xaml</DependentUpon>
     </Compile>
@@ -126,6 +130,10 @@
       <DependentUpon>ClientWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\Windows\AddParserWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\Windows\AddToDataBaseWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
