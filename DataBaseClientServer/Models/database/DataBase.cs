@@ -85,6 +85,7 @@ namespace DataBaseClientServer.Models.database
 		public DataTable SendQuery(string query)
 		{
 			var _query = query.Replace("[", "`").Replace("]", "`").Replace("Тип книги", "тип книги");
+			Console.WriteLine(_query);
 			MySqlCommand command = new MySqlCommand(_query, _connection);
 			MySqlDataAdapter dtb = new MySqlDataAdapter();
 			dtb.SelectCommand = command;

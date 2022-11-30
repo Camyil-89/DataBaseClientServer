@@ -12,7 +12,7 @@ using System.Windows.Input;
 
 namespace DataBaseClientServer.ViewModels
 {
-	public class AdminToolChangeVM: Base.ViewModel.BaseViewModel
+	public class AdminToolChangeVM : Base.ViewModel.BaseViewModel
 	{
 		public readonly ClientViewModel ClientViewModel;
 		public Client.Views.Windows.AdminToolChangeWindow Window { get; set; }
@@ -52,7 +52,7 @@ namespace DataBaseClientServer.ViewModels
 		/// <param name="e"></param>
 		public void Table_RowDeleted(object sender, DataRowChangeEventArgs e)
 		{
-			string sql = $"DELETE FROM [{Table.Table.TableName}] WHERE {Table.Table.Columns[0].ColumnName} = {e.Row.ItemArray[0]}";
+			string sql = $"DELETE FROM [{Table.Table.TableName}] WHERE `{Table.Table.Columns[0].ColumnName}` = {e.Row.ItemArray[0]}";
 			Query query = new Query() { SQL = sql, Command = $"DELETE FROM [{Table.Table.TableName}]" };
 			if (SQLQueryes.ContainsKey(e.Row.ItemArray[0].ToString()))
 			{
@@ -77,17 +77,25 @@ namespace DataBaseClientServer.ViewModels
 			{
 				if (i.ColumnName == Table.Table.Columns[0].ColumnName) { index++; continue; }
 				if (index != 1) sql += ",";
-				sql += $"[{i.ColumnName}] = '{e.Row.ItemArray[index]}' ";
+				if (e.Row.ItemArray[index].GetType() == typeof(DateTime))
+					sql += $"[{i.ColumnName}] = '{((DateTime)e.Row.ItemArray[index]).Year}-{((DateTime)e.Row.ItemArray[index]).Month}-{((DateTime)e.Row.ItemArray[index]).Day}' ";
+				else if (e.Row.ItemArray[index].GetType() == typeof(System.Boolean))
+				{
+					var x = (bool)e.Row.ItemArray[index] ? 1: 0;
+					sql += $"[{i.ColumnName}] = '{x}' ";
+				}
+				else
+					sql += $"[{i.ColumnName}] = '{e.Row.ItemArray[index]}' ";
 				index++;
 			}
-			sql += $"WHERE {Table.Table.Columns[0].ColumnName} = {e.Row.ItemArray[0]}";
+			sql += $"WHERE `{Table.Table.Columns[0].ColumnName}` = {e.Row.ItemArray[0]}";
 			Query query = new Query() { SQL = sql, Command = $"UPDATE [{Table.Table.TableName}]" };
 			if (SQLQueryes.ContainsKey(e.Row.ItemArray[0].ToString()))
 			{
 				Queries.Remove(SQLQueryes[e.Row.ItemArray[0].ToString()]);
 				SQLQueryes[e.Row.ItemArray[0].ToString()] = query;
 			}
-			else SQLQueryes.Add(e.Row.ItemArray[0].ToString(),query);
+			else SQLQueryes.Add(e.Row.ItemArray[0].ToString(), query);
 			Queries.Add(query);
 			Log.WriteLine(string.Join("\n", Queries));
 		}
@@ -146,7 +154,7 @@ namespace DataBaseClientServer.ViewModels
 			}
 			query.SQL = sql;
 			SQLQueryesInsert.Add(row[Table.Table.Columns[0]].ToString(), query);
-			
+
 			Log.WriteLine(string.Join("\n", Queries));
 		}
 		#endregion

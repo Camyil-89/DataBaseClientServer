@@ -8,73 +8,73 @@
         mc:Ignorable="d"
         Title="{Binding Title}" Height="450" Width="450"
 		WindowStartupLocation="CenterScreen">
-	<Window.DataContext>
-		<vm:AddToDataBaseVM/>
-	</Window.DataContext>
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition/>
-			<RowDefinition Height="50"/>
-		</Grid.RowDefinitions>
-		<StackPanel Grid.Row="0" Orientation="Vertical" Visibility="{Binding VisibilityAddBook}">
-			<StackPanel Orientation="Vertical">
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="50*"/>
-						<ColumnDefinition Width="50*"/>
-					</Grid.ColumnDefinitions>
-					<TextBlock Grid.Column="0" FontSize="14" Text="название книги" HorizontalAlignment="Right" Margin="5"/>
-					<TextBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" Text="{Binding NameBook, UpdateSourceTrigger=PropertyChanged}"/>
-				</Grid>
-			</StackPanel>
-			<StackPanel Orientation="Vertical">
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="50*"/>
-						<ColumnDefinition Width="50*"/>
-					</Grid.ColumnDefinitions>
-					<TextBlock Grid.Column="0" FontSize="14" Text="Выберите автора" HorizontalAlignment="Right" Margin="5"/>
-					<ComboBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" ItemsSource="{Binding ComboBoxAuthor}" SelectedItem="{Binding SelectedAuthor}">
-						<ComboBox.ItemTemplate>
-							<DataTemplate>
-								<StackPanel Orientation="Horizontal">
-									<TextBlock FontSize="14" Text="{Binding ItemArray[1]}"/>
-									<TextBlock FontSize="14" Text=" "/>
-									<TextBlock FontSize="14" Text="{Binding ItemArray[2]}"/>
-									<TextBlock FontSize="14" Text=" "/>
-									<TextBlock FontSize="14" Text="{Binding ItemArray[3]}"/>
-								</StackPanel>
-							</DataTemplate>
-						</ComboBox.ItemTemplate>
-					</ComboBox>
-				</Grid>
-			</StackPanel>
-			<StackPanel Orientation="Vertical">
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="50*"/>
-						<ColumnDefinition Width="50*"/>
-					</Grid.ColumnDefinitions>
-					<TextBlock Grid.Column="0" FontSize="14" Text="Выберите тип книги" HorizontalAlignment="Right" Margin="5"/>
-					<ComboBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" ItemsSource="{Binding ComboBoxTypeBook}" SelectedItem="{Binding SelectedTypeBook}">
-						<ComboBox.ItemTemplate>
-							<DataTemplate>
-								<StackPanel Orientation="Horizontal">
-									<TextBlock FontSize="14" Text="{Binding ItemArray[1]}"/>
-								</StackPanel>
-							</DataTemplate>
-						</ComboBox.ItemTemplate>
-					</ComboBox>
-				</Grid>
-			</StackPanel>
-			<StackPanel Orientation="Vertical">
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="50*"/>
-						<ColumnDefinition Width="50*"/>
-					</Grid.ColumnDefinitions>
-					<TextBlock Grid.Column="0" FontSize="14" Text="Выберите жанр" HorizontalAlignment="Right" Margin="5"/>
-					<!--<ComboBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" ItemsSource="{Binding ComboBoxGenre}" SelectedItem="{Binding SelectedGenre}">
+    <Window.DataContext>
+        <vm:AddToDataBaseVM/>
+    </Window.DataContext>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition Height="50"/>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Vertical" Visibility="{Binding VisibilityAddBook}">
+            <StackPanel Orientation="Vertical">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50*"/>
+                        <ColumnDefinition Width="50*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" FontSize="14" Text="название книги" HorizontalAlignment="Right" Margin="5"/>
+                    <TextBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" Text="{Binding NameBook, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
+            </StackPanel>
+            <StackPanel Orientation="Vertical">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50*"/>
+                        <ColumnDefinition Width="50*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" FontSize="14" Text="Выберите автора" HorizontalAlignment="Right" Margin="5"/>
+                    <ComboBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" ItemsSource="{Binding ComboBoxAuthor}" SelectedItem="{Binding SelectedAuthor}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontSize="14" Text="{Binding ItemArray[1]}"/>
+                                    <TextBlock FontSize="14" Text=" "/>
+                                    <TextBlock FontSize="14" Text="{Binding ItemArray[2]}"/>
+                                    <TextBlock FontSize="14" Text=" "/>
+                                    <TextBlock FontSize="14" Text="{Binding ItemArray[3]}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+            </StackPanel>
+            <StackPanel Orientation="Vertical">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50*"/>
+                        <ColumnDefinition Width="50*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" FontSize="14" Text="Выберите тип книги" HorizontalAlignment="Right" Margin="5"/>
+                    <ComboBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" ItemsSource="{Binding ComboBoxTypeBook}" SelectedItem="{Binding SelectedTypeBook}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontSize="14" Text="{Binding ItemArray[1]}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </Grid>
+            </StackPanel>
+            <StackPanel Orientation="Vertical">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50*"/>
+                        <ColumnDefinition Width="50*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" FontSize="14" Text="Жанр" HorizontalAlignment="Right" Margin="5"/>
+                    <!--<ComboBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" ItemsSource="{Binding ComboBoxGenre}" SelectedItem="{Binding SelectedGenre}">
 						<ComboBox.ItemTemplate>
 							<DataTemplate>
 								<StackPanel Orientation="Horizontal">
@@ -86,25 +86,25 @@
                     <TextBox  Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5"
                               Text="{Binding GenreText, UpdateSourceTrigger=PropertyChanged}"/>
                 </Grid>
-			</StackPanel>
-			<StackPanel Orientation="Vertical">
-				<Grid>
-					<Grid.ColumnDefinitions>
-						<ColumnDefinition Width="50*"/>
-						<ColumnDefinition Width="50*"/>
-					</Grid.ColumnDefinitions>
-					<TextBlock Grid.Column="0" FontSize="14" Text="Рейтинг" HorizontalAlignment="Right" Margin="5"/>
-					<TextBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" Text="{Binding Rating, UpdateSourceTrigger=PropertyChanged}"/>
-				</Grid>
-			</StackPanel>
-		</StackPanel>
-		<Grid Grid.Row="1">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition/>
-				<ColumnDefinition/>
-			</Grid.ColumnDefinitions>
-			<Button Width="100" Height="25" FontSize="14" Grid.Column="0" Content="Добавить" Command="{Binding AddRowCommand}"/>
-			<Button Width="100" Height="25" FontSize="14" Grid.Column="1" Content="Отмена" Command="{Binding CloseCommand}"/>
-		</Grid>
-	</Grid>
+            </StackPanel>
+            <StackPanel Orientation="Vertical">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="50*"/>
+                        <ColumnDefinition Width="50*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" FontSize="14" Text="Рейтинг" HorizontalAlignment="Right" Margin="5"/>
+                    <TextBox Grid.Column="1" FontSize="14" Width="200" HorizontalAlignment="Left" Margin="5" Text="{Binding Rating, UpdateSourceTrigger=PropertyChanged}"/>
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Width="100" Height="25" FontSize="14" Grid.Column="0" Content="Добавить" Command="{Binding AddRowCommand}"/>
+            <Button Width="100" Height="25" FontSize="14" Grid.Column="1" Content="Отмена" Command="{Binding CloseCommand}"/>
+        </Grid>
+    </Grid>
 </Window>
